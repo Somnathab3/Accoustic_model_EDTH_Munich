@@ -244,21 +244,21 @@ class CleanChallengeBot:
             traceback.print_exc()
             return False
     
-    def run(self, max_iterations: int = None, delay: float = 1.0):
+    def run(self, max_iterations: int = None, delay: float = 0.0):
         """
-        Run the challenge bot with smart timing
+        Run the challenge bot with AGGRESSIVE TIMING for maximum speed
         
         Args:
             max_iterations: Maximum number of iterations (None = infinite)
-            delay: Base delay between challenges in seconds
+            delay: Base delay between challenges (0.0 for fastest)
         """
         print("="*60)
-        print("CLEAN CHALLENGE BOT - STARTING")
+        print("⚡ SPEED MODE CHALLENGE BOT - AGGRESSIVE TIMING")
         print("="*60)
         print(f"Max iterations: {max_iterations if max_iterations else 'Infinite'}")
         print(f"Base delay: {delay}s")
         print(f"Pre-sync mode: Check every 1s until first score > 0")
-        print(f"Synced mode: Wait 100s cycle after score received")
+        print(f"⚡ SPEED mode: Wait 98s + rapid poll 4x/sec for 2s")
         print("="*60 + "\n")
         
         iteration_count = 0
@@ -295,21 +295,44 @@ class CleanChallengeBot:
                             print(f"🔍 Checking for new challenge in {check_interval:.0f}s (pre-sync mode)...")
                             time.sleep(check_interval)
                         else:
-                            # AFTER first score: Use smart 100s wait based on timing
-                            wait_time = 100.0  # Wait 100 seconds for new challenge
+                            # AGGRESSIVE TIMING: Wait 98s, then rapid-fire polling
+                            base_wait = 98.0  # Wait 98s to position before new challenge
+                            rapid_poll_window = 2.0  # 2s window for rapid polling
                             
                             # Calculate time since last score
                             if self.last_score_time:
                                 time_since_score = time.time() - self.last_score_time
-                                remaining_wait = max(0, wait_time - time_since_score)
+                                
+                                if time_since_score < base_wait:
+                                    # Normal wait until 98s mark
+                                    remaining_wait = base_wait - time_since_score
+                                    print(f"⏳ Positioning for next challenge in {remaining_wait:.0f}s...")
+                                    time.sleep(remaining_wait)
+                                    
+                                    # Now enter rapid polling phase
+                                    print(f"⚡ RAPID POLLING MODE: Checking every 0.25s for new challenge...")
+                                    self.wait_for_new_challenge = False
+                                    continue  # Skip to next iteration immediately
+                                    
+                                elif time_since_score < (base_wait + rapid_poll_window):
+                                    # In rapid polling window (98-100s)
+                                    print(f"⚡ Rapid poll #{int(time_since_score - base_wait) * 4}...")
+                                    time.sleep(0.25)  # Check 4 times per second
+                                    self.wait_for_new_challenge = False
+                                    continue
+                                    
+                                else:
+                                    # Past 100s, reset and wait full cycle
+                                    print(f"⏳ Cycle complete, repositioning in 98s...")
+                                    time.sleep(base_wait)
+                                    print(f"⚡ RAPID POLLING MODE: Checking every 0.25s for new challenge...")
+                                    self.wait_for_new_challenge = False
+                                    continue
                             else:
-                                remaining_wait = wait_time
-                            
-                            if remaining_wait > 0:
-                                print(f"⏳ Waiting {remaining_wait:.0f}s for new challenge (synced with server)...")
-                                time.sleep(remaining_wait)
-                            else:
-                                print(f"⏳ Server cycle complete, checking for new challenge...")
+                                # First time, wait full 98s
+                                print(f"⏳ Initial positioning in {base_wait:.0f}s...")
+                                time.sleep(base_wait)
+                                print(f"⚡ RAPID POLLING MODE: Checking every 0.25s for new challenge...")
                         
                         self.wait_for_new_challenge = False  # Reset flag
                     
