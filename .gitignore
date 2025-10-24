@@ -6,6 +6,6 @@ data/*
 !data/.gitkeep
 models/*
 !models/.gitkeep
-!models/cnn_edth_3class_improved.pt
-!models/labels_edth_3class_improved.json
-!models/training_history_improved.json
+!models/panns_final.pt
+!models/best_model.pt
+!models/labels_current.json

@@ -1,0 +1,12 @@
+{
+  "class_to_idx": {
+    "background": 0,
+    "drone": 1,
+    "helicopter": 2
+  },
+  "idx_to_class": {
+    "0": "background",
+    "1": "drone",
+    "2": "helicopter"
+  }
+}
