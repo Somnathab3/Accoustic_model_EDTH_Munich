@@ -1,0 +1,25 @@
+{
+  "total_attempts": 57,
+  "correct": 18,
+  "wrong": 39,
+  "total_score": 3859,
+  "accuracy": 0.3157894736842105,
+  "predictions": {
+    "drone": 34,
+    "background": 17,
+    "helicopter": 6
+  },
+  "confusion_matrix": {
+    "background": {
+      "unknown": 17
+    },
+    "drone": {
+      "unknown": 11
+    },
+    "helicopter": {
+      "unknown": 6
+    }
+  },
+  "start_time": "2025-10-24T21:15:36.050137",
+  "last_update": "2025-10-24T23:18:39.267253"
+}

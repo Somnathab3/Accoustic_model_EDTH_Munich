@@ -30,6 +30,9 @@ MODEL_PATH = "models/cnn_edth_3class_improved.pt"
 LABELS_PATH = "models/labels_edth_3class_improved.json"
 STORAGE_DIR = "challenge_results"
 
+# EMERGENCY: Model is broken, use heuristic-based classification
+USE_HEURISTIC = True  # Set to False once model is retrained
+
 # Audio processing parameters
 SAMPLE_RATE = 16000
 N_MELS = 128
@@ -159,43 +162,42 @@ class FFTCNNDNNChallengeBot:
     def run_single_challenge(self):
         """Run a single challenge iteration"""
         try:
-            # Fetch challenge
-            print("📥 Fetching challenge...")
+            # Fetch challenge (silent for speed)
             challenge = self.api_client.get_challenge()
             challenge_id = challenge['challenge_id']
             wav_url = challenge['wav_url']
             
-            print(f"   Challenge ID: {challenge_id}")
-            print(f"   Audio URL: {wav_url}")
-            
-            # Download audio
-            print("🎵 Downloading audio...")
+            # Download audio (silent for speed)
             with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
                 tmp_path = tmp_file.name
             
             self.api_client.download_audio(wav_url, tmp_path)
             
-            # Classify with FFT + CNN + DNN
-            print("🔍 Processing with FFT + CNN + DNN...")
+            # Classify with FFT + CNN + DNN (silent for speed)
             prediction, confidence, all_probs, inference_time = self.classify_audio(tmp_path)
             
-            print(f"   Prediction: {prediction.upper()}")
-            print(f"   Confidence: {confidence:.2%}")
-            print(f"   All probabilities:")
-            for label, prob in all_probs.items():
-                print(f"      {label:12s}: {prob:.2%}")
-            print(f"   Inference time: {inference_time:.3f}s")
-            
-            # Submit classification
-            print(f"📤 Submitting: {prediction}")
+            # CRITICAL: Submit immediately without any prints for fastest upload!
             result = self.api_client.submit_classification(challenge_id, prediction)
             
+            # Now print results AFTER submission
+            # Debug: Show all probabilities to diagnose bias
+            all_probs_str = " | ".join([f"{k}:{v:.1%}" for k, v in all_probs.items()])
+            print(f"📤 {prediction.upper()} [{confidence:.2%}] ({all_probs_str}) -> ", end="")
+            
             # Process result
-            is_correct = result.get('success', False)
             score_awarded = result.get('score_awarded', 0)
             total_score = result.get('total_score', 0)
             
-            # Store result
+            # Correct prediction = positive score awarded, Wrong = 0 or negative score
+            is_correct = score_awarded > 0
+            
+            # Print result inline
+            if is_correct:
+                print(f"✅ CORRECT! +{score_awarded} (Total: {total_score}) [{inference_time:.3f}s]")
+            else:
+                print(f"❌ WRONG (Total: {total_score}) [{inference_time:.3f}s]")
+            
+            # Store result (silent for speed)
             self.storage.store_result(
                 challenge_id=challenge_id,
                 audio_path=tmp_path,
@@ -210,26 +212,6 @@ class FFTCNNDNNChallengeBot:
             
             # Update learning tracker
             self.learning_tracker.add_result(prediction, confidence, is_correct)
-            
-            # Display result
-            print("\n" + "="*80)
-            if is_correct:
-                print("✅ CORRECT!")
-                print(f"   Score awarded: {score_awarded}")
-                print(f"   Total score: {total_score}")
-            else:
-                print("❌ WRONG!")
-                print(f"   Message: {result.get('message', 'No message')}")
-                print(f"   Expected score was 0, got: {score_awarded}")
-            
-            # Show statistics
-            stats = self.storage.get_statistics()
-            print(f"\n📊 Session Stats:")
-            print(f"   Correct: {stats['correct']}")
-            print(f"   Wrong: {stats['wrong']}")
-            print(f"   Accuracy: {stats['accuracy']*100:.1f}%")
-            print(f"   Total Score: {stats['total_score']}")
-            print("="*80)
             
             # Cleanup
             Path(tmp_path).unlink(missing_ok=True)
@@ -250,61 +232,39 @@ class FFTCNNDNNChallengeBot:
             max_iterations: Maximum challenges to attempt (None = infinite)
             delay: Seconds to wait between challenges
         """
+        print("🤖 FFT+CNN+DNN Bot | API: edth.helsing.codes | Storage: challenge_results")
         print("=" * 80)
-        print("🤖 FFT + CNN + DNN CHALLENGE BOT")
-        print("=" * 80)
-        print(f"🎯 API: {API_BASE_URL}")
-        print(f"🔑 Token: {API_TOKEN[:8]}...")
-        print(f"🧠 Architecture: FFT → CNN → DNN")
-        print(f"💾 Storage: {STORAGE_DIR}")
-        print("\n" + "=" * 80)
         
         iteration = 0
         
         try:
             while max_iterations is None or iteration < max_iterations:
                 iteration += 1
-                print(f"\n{'='*80}")
-                print(f"🔄 Challenge #{iteration} - {datetime.now().strftime('%H:%M:%S')}")
-                print(f"{'='*80}")
+                print(f"#{iteration:03d} ", end="", flush=True)
                 
                 success = self.run_single_challenge()
                 
                 if not success:
-                    print(f"   Retrying in {delay}s...")
+                    print(f"   ⚠ Retrying in {delay}s...")
                 
-                # Show adaptive learning recommendations periodically
+                # Show stats every 10 iterations
                 if iteration % 10 == 0:
-                    recommendations = self.learning_tracker.get_recommendations()
-                    if 'message' not in recommendations:
-                        print("\n🎓 Adaptive Learning Recommendations:")
-                        for class_name, rec in recommendations.items():
-                            print(f"   {class_name}: {rec['status']} - {rec['suggestion']}")
+                    stats = self.storage.get_statistics()
+                    print(f"      📊 Stats: {stats['correct']}/{stats['total_attempts']} correct ({stats['accuracy']*100:.1f}%), Score: {stats['total_score']}")
                 
                 # Wait before next challenge
                 if max_iterations is None or iteration < max_iterations:
                     time.sleep(delay)
         
         except KeyboardInterrupt:
-            print("\n\n🛑 Bot stopped by user")
+            print("\n🛑 Stopped by user")
         
         # Final summary
         print("\n" + "="*80)
-        print("🏁 Challenge Bot Session Complete!")
+        print("🏁 Session Complete!")
         stats = self.storage.get_statistics()
-        print(f"   Total Attempts: {stats['total_attempts']}")
-        print(f"   Correct: {stats['correct']}")
-        print(f"   Wrong: {stats['wrong']}")
-        print(f"   Accuracy: {stats['accuracy']*100:.1f}%")
-        print(f"   Final Score: {stats['total_score']}")
+        print(f"   Total: {stats['total_attempts']} | Correct: {stats['correct']} | Accuracy: {stats['accuracy']*100:.1f}% | Score: {stats['total_score']}")
         print("="*80)
-        
-        # Performance analysis
-        analysis = self.storage.analyze_performance()
-        print("\n📈 Performance Analysis:")
-        for key, value in analysis.items():
-            if key not in ['prediction_distribution']:
-                print(f"   {key}: {value}")
 
 
 def main():

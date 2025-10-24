@@ -1,0 +1,28 @@
+# Improved training configuration for EDTH 3-class dataset
+# Classes: background, drone, helicopter
+
+# Dataset paths
+train_csv: "data/edth_prepared/metadata_train.csv"
+val_csv: "data/edth_prepared/metadata_val.csv"
+labels_json: "data/edth_prepared/labels.json"
+
+# Output paths
+model_out: "models/cnn_edth_3class_improved.pt"
+labels_out: "models/labels_edth_3class_improved.json"
+
+# Audio processing parameters
+sample_rate: 16000
+n_mels: 128  # Increased from 64 for better frequency resolution
+n_fft: 2048  # Increased from 1024 for better frequency resolution
+hop_length: 512  # Increased from 320
+window_sec: 3.0  # Increased from 2.0 for more context
+
+# Training parameters
+batch_size: 32
+epochs: 100
+lr: 0.001
+num_workers: 4
+seed: 42
+
+# Model architecture
+model_type: "improved"  # Options: "small", "improved", "large"

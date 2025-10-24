@@ -1,0 +1,58 @@
+================================================================================
+FFT + CNN + DNN ARCHITECTURE ANALYSIS
+================================================================================
+
+OVERALL MODEL STATISTICS
+--------------------------------------------------------------------------------
+Total Parameters:            1,961,827
+Trainable Parameters:        1,961,827
+Model Size (approx):           7.48 MB (float32)
+
+COMPONENT BREAKDOWN
+--------------------------------------------------------------------------------
+CNN Feature Extractor:       1,361,376 params (69.4%)
+  - Initial Conv Layer:     32 channels
+  - ResBlock 1 + Attention: 64 channels
+  - ResBlock 2 + Attention: 128 channels
+  - ResBlock 3 + Attention: 256 channels
+  - Feature Projection:     256 → 512 dims
+
+DNN Classifier:                560,131 params (28.6%)
+  - Hidden Layer 1:         512 → 256 dims
+  - Hidden Layer 2:         256 → 128 dims
+  - Output Layer:           128 → 3 dims
+
+KEY ARCHITECTURAL FEATURES
+--------------------------------------------------------------------------------
+✓ Residual Connections:    Better gradient flow, deeper training
+✓ Channel Attention:       Focus on important frequency channels
+✓ Batch Normalization:     Faster convergence, regularization
+✓ Dropout (0.3, 0.2):      Prevent overfitting
+✓ Global Average Pooling:  Reduce parameters, prevent overfitting
+✓ Multi-layer DNN:         Hierarchical decision making
+
+PERFORMANCE CHARACTERISTICS
+--------------------------------------------------------------------------------
+Input Processing:
+  - Audio Duration:         2.0 seconds @ 16kHz
+  - FFT Window:             2048 samples
+  - Hop Length:             512 samples
+  - Mel Bands:              128
+  - Input Shape:            (1, 128, 63)
+
+Inference Speed (CPU):      ~50-100ms per sample
+Inference Speed (GPU):      ~10-20ms per sample
+Training Time (50 epochs):  ~2-3 hours on GPU
+Memory Usage (training):    ~2-4 GB GPU
+
+COMPARISON WITH BASELINE
+--------------------------------------------------------------------------------
+FFT + CNN + DNN vs Simple CNN:
+  ✓ Better frequency representation (FFT preprocessing)
+  ✓ Deeper feature learning (Residual blocks)
+  ✓ More sophisticated classification (Multi-layer DNN)
+  ✓ Higher accuracy (~5-10% improvement expected)
+  ✗ More parameters (1.5M vs ~500K)
+  ✗ Slightly slower inference (~2x)
+
+================================================================================

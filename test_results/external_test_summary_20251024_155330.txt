@@ -1,0 +1,24 @@
+================================================================================
+EXTERNAL DATASET TEST RESULTS - DroneAudioDataset (Al-Emadi et al.)
+================================================================================
+
+Timestamp: 20251024_155330
+Model: models/cnn_small.pt
+Test Dataset: data\test_dataset\Binary_Drone_Audio
+Confidence Threshold: 0.5
+
+CONFUSION MATRIX:
+                    Predicted Drone    Predicted Unknown
+  Actual Drone            995                  5        
+  Actual Unknown          276                 724       
+
+PERFORMANCE METRICS:
+  Overall Accuracy:  85.95%
+  Precision:         78.28%
+  Recall (TPR):      99.50%
+  Specificity (TNR): 72.40%
+  F1-Score:          87.63%
+
+PER-CLASS RESULTS:
+  Drone (yes_drone):   995/1000 = 99.50%
+  Unknown:             724/1000 = 72.40%

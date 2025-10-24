@@ -1,0 +1,30 @@
+# Training configuration for EDTH Munich 3-class dataset
+# Classes: 0=background, 1=drone, 2=helicopter
+
+# Random seed for reproducibility
+seed: 42
+
+# Audio processing parameters
+sample_rate: 16000
+n_mels: 64
+n_fft: 1024
+hop_length: 320
+window_sec: 2.0
+
+# Training parameters
+batch_size: 64  # Increased for better GPU utilization
+epochs: 50      # Increased for better convergence
+lr: 0.001
+num_workers: 4  # Parallel data loading
+
+# Data paths
+train_csv: data/edth_prepared/metadata_train.csv
+val_csv: data/edth_prepared/metadata_val.csv
+labels_json: data/edth_prepared/labels.json
+
+# Output paths
+model_out: models/cnn_edth_3class.pt
+labels_out: models/labels_edth_3class.json
+
+# Number of classes (IMPORTANT: set to 3 for drone/helicopter/background)
+num_classes: 3
