@@ -6,8 +6,8 @@ data/*
 !data/.gitkeep
 !data/edth_munich_dataset/
 !data/edth_munich_dataset/**
-models/*
 !models/.gitkeep
 !models/panns_final.pt
 !models/best_model.pt
 !models/labels_current.json
+challenge_results/

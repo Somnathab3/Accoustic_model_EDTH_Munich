@@ -179,8 +179,14 @@ class CleanChallengeBot:
                     self.last_score_time = time.time()
                     print(f"🎯 First score received! Now synced with server timing...")
                 else:
-                    self.last_score_time = time.time()
-                    print(f"🎯 Score received! Re-syncing timing...")
+                    # Check if we got a score between 100-120 (mistimed response)
+                    if 100 <= score_awarded <= 120:
+                        print(f"⚠️  Score {score_awarded} indicates mistiming! Resetting to pre-sync mode...")
+                        self.first_score_received = False  # Reset to pre-sync mode (1s checks)
+                        self.last_score_time = None
+                    else:
+                        self.last_score_time = time.time()
+                        print(f"🎯 Score received! Re-syncing timing...")
             
             # Update statistics
             self.iteration += 1
@@ -295,9 +301,9 @@ class CleanChallengeBot:
                             print(f"🔍 Checking for new challenge in {check_interval:.0f}s (pre-sync mode)...")
                             time.sleep(check_interval)
                         else:
-                            # AGGRESSIVE TIMING: Wait 98s, then rapid-fire polling
-                            base_wait = 98.0  # Wait 98s to position before new challenge
-                            rapid_poll_window = 2.0  # 2s window for rapid polling
+                            # AGGRESSIVE TIMING: Wait 99s, then rapid-fire polling
+                            base_wait = 99.0  # Wait 99s to position before new challenge
+                            rapid_poll_window = 3.0  # 3s window for rapid polling
                             
                             # Calculate time since last score
                             if self.last_score_time:
@@ -310,14 +316,14 @@ class CleanChallengeBot:
                                     time.sleep(remaining_wait)
                                     
                                     # Now enter rapid polling phase
-                                    print(f"⚡ RAPID POLLING MODE: Checking every 0.25s for new challenge...")
+                                    print(f"⚡ RAPID POLLING MODE: Checking every 0.05s for new challenge...")
                                     self.wait_for_new_challenge = False
                                     continue  # Skip to next iteration immediately
                                     
                                 elif time_since_score < (base_wait + rapid_poll_window):
                                     # In rapid polling window (98-100s)
-                                    print(f"⚡ Rapid poll #{int(time_since_score - base_wait) * 4}...")
-                                    time.sleep(0.25)  # Check 4 times per second
+                                    print(f"⚡ Rapid poll #{int(time_since_score - base_wait) * 10}...")
+                                    time.sleep(0.05)  # Check 10 times per second
                                     self.wait_for_new_challenge = False
                                     continue
                                     
@@ -325,14 +331,14 @@ class CleanChallengeBot:
                                     # Past 100s, reset and wait full cycle
                                     print(f"⏳ Cycle complete, repositioning in 98s...")
                                     time.sleep(base_wait)
-                                    print(f"⚡ RAPID POLLING MODE: Checking every 0.25s for new challenge...")
+                                    print(f"⚡ RAPID POLLING MODE: Checking every 0.05s for new challenge...")
                                     self.wait_for_new_challenge = False
                                     continue
                             else:
                                 # First time, wait full 98s
                                 print(f"⏳ Initial positioning in {base_wait:.0f}s...")
                                 time.sleep(base_wait)
-                                print(f"⚡ RAPID POLLING MODE: Checking every 0.25s for new challenge...")
+                                print(f"⚡ RAPID POLLING MODE: Checking every 0.05s for new challenge...")
                         
                         self.wait_for_new_challenge = False  # Reset flag
                     
@@ -410,22 +416,51 @@ def main():
     
     # Auto-detect best model if not specified
     if args.model is None:
-        # Priority: panns_final.pt (trained) > best_model.pt (training)
-        final_model = Path('models/panns_final.pt')
-        best_model = Path('models/best_model.pt')
+        # Priority: crnn_combined/crnn_final.pt (BEST - latest trained) > panns_combined/panns_final.pt > models/best_model.pt
+        crnn_final_model = Path('models/crnn_combined/crnn_final.pt')
+        crnn_best_model = Path('models/crnn_combined/best_model.pt')
+        panns_final_model = Path('models/panns_combined/panns_final.pt')
+        panns_best_model = Path('models/panns_combined/best_model.pt')
+        root_best_model = Path('models/best_model.pt')
         
-        if final_model.exists():
-            args.model = str(final_model)
-            print(f"✓ Using final trained model: {args.model}")
-        elif best_model.exists():
-            args.model = str(best_model)
-            print(f"⚡ Using best checkpoint (training in progress): {args.model}")
-            print(f"   Will automatically use panns_final.pt when training completes")
+        if crnn_final_model.exists():
+            args.model = str(crnn_final_model)
+            print(f"✓ Using LATEST CRNN MODEL: {args.model}")
+            print(f"  🎯 This is the complete trained CRNN model from crnn_combined")
+            
+            # Load model info
+            try:
+                checkpoint = torch.load(args.model, map_location='cpu', weights_only=False)
+                model_type = checkpoint.get('model_type', 'crnn')
+                num_classes = checkpoint.get('num_classes', 3)
+                input_channels = checkpoint.get('input_channels', 3)
+                n_mels = checkpoint.get('n_mels', 96)
+                print(f"  📊 Model: {model_type.upper()} | Channels: {input_channels} | Classes: {num_classes} | Mels: {n_mels}")
+            except:
+                print(f"  📊 Model: CRNN (assumed)")
+                
+        elif crnn_best_model.exists():
+            args.model = str(crnn_best_model)
+            print(f"✓ Using best checkpoint from crnn_combined: {args.model}")
+            print(f"  💡 Note: crnn_final.pt not found, using best checkpoint")
+        elif panns_final_model.exists():
+            args.model = str(panns_final_model)
+            print(f"✓ Using PANNs model (fallback): {args.model}")
+            print(f"  💡 Note: CRNN model not found, using PANNs")
+        elif panns_best_model.exists():
+            args.model = str(panns_best_model)
+            print(f"✓ Using best checkpoint from panns_combined: {args.model}")
+        elif root_best_model.exists():
+            args.model = str(root_best_model)
+            print(f"⚡ Using root best checkpoint: {args.model}")
         else:
             print("❌ Error: No model found!")
             print("\nSearched for:")
-            print(f"  - {final_model} (final trained model)")
-            print(f"  - {best_model} (best checkpoint)")
+            print(f"  - {crnn_final_model} (RECOMMENDED - latest trained CRNN)")
+            print(f"  - {crnn_best_model} (CRNN best checkpoint)")
+            print(f"  - {panns_final_model} (PANNs fallback)")
+            print(f"  - {panns_best_model}")
+            print(f"  - {root_best_model}")
             print("\nPlease train the model first using:")
             print("  python train_sota_model.py --train-dir data/edth_munich_dataset/data/train "
                   "--val-dir data/edth_munich_dataset/data/val")
@@ -437,17 +472,29 @@ def main():
     
     # Auto-detect labels if not specified
     if args.labels is None:
-        # Try labels_current.json (correct 3-class), then labels.json
+        # Priority: crnn_combined/labels.json (matching CRNN) > panns_combined/labels.json > models/labels_current.json
+        crnn_labels = Path('models/crnn_combined/labels.json')
+        panns_labels = Path('models/panns_combined/labels.json')
         labels_current = Path('models/labels_current.json')
         labels_default = Path('models/labels.json')
         
-        if labels_current.exists():
+        if crnn_labels.exists():
+            args.labels = str(crnn_labels)
+            print(f"✓ Using labels from crnn_combined: {args.labels}")
+        elif panns_labels.exists():
+            args.labels = str(panns_labels)
+            print(f"✓ Using labels from panns_combined: {args.labels}")
+        elif labels_current.exists():
             args.labels = str(labels_current)
+            print(f"✓ Using labels_current: {args.labels}")
         elif labels_default.exists():
             args.labels = str(labels_default)
+            print(f"✓ Using root labels: {args.labels}")
         else:
             print("❌ Error: No labels file found!")
             print("\nSearched for:")
+            print(f"  - {crnn_labels} (CRNN labels)")
+            print(f"  - {panns_labels} (PANNs labels)")
             print(f"  - {labels_current}")
             print(f"  - {labels_default}")
             sys.exit(1)

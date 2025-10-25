@@ -5,7 +5,7 @@ Checks model performance on validation set with comprehensive metrics
 import sys
 import os
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent / 'src'))
 
 import torch
 import torch.nn.functional as F
@@ -15,15 +15,16 @@ import argparse
 from sklearn.metrics import classification_report, confusion_matrix, f1_score
 from tqdm import tqdm
 
-from src.adrone.preprocessing import AudioPreprocessor
-from src.adrone.models.acoustic_models import create_model
-from src.adrone.evaluation import evaluate_model, print_evaluation_report
+from adrone.preprocessing import AudioPreprocessor
+from adrone.models.acoustic_models import create_model
+from adrone.evaluation import evaluate_model, print_evaluation_report
 
 def load_model_and_config(model_path: str):
     """Load model checkpoint and extract configuration"""
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
-    checkpoint = torch.load(model_path, map_location=device)
+    print(f"\n🔧 Loading model from: {model_path}")
+    checkpoint = torch.load(model_path, map_location=device, weights_only=False)
     
     # Extract model configuration
     model_type = checkpoint.get('model_type', 'panns')
@@ -31,18 +32,26 @@ def load_model_and_config(model_path: str):
     num_classes = checkpoint.get('num_classes', 3)
     n_mels = checkpoint.get('n_mels', 96)
     
+    print(f"   Model type: {model_type}")
+    print(f"   Input channels: {input_channels}")
+    print(f"   Num classes: {num_classes}")
+    print(f"   N mels: {n_mels}")
+    
     # Create model
     model = create_model(
         model_type=model_type,
         num_classes=num_classes,
         input_channels=input_channels,
-        n_mels=n_mels
+        n_mels=n_mels if model_type == 'crnn' else None
     )
     
     # Load weights
     model.load_state_dict(checkpoint['model_state_dict'])
     model = model.to(device)
     model.eval()
+    
+    total_params = sum(p.numel() for p in model.parameters())
+    print(f"   Parameters: {total_params:,} ({total_params/1e6:.2f}M)")
     
     config = {
         'model_type': model_type,
@@ -54,8 +63,10 @@ def load_model_and_config(model_path: str):
     
     if 'best_epoch' in checkpoint:
         config['best_epoch'] = checkpoint['best_epoch']
+        print(f"   Best epoch: {checkpoint['best_epoch']}")
     if 'best_macro_f1' in checkpoint:
         config['best_macro_f1'] = checkpoint['best_macro_f1']
+        print(f"   Best macro F1: {checkpoint['best_macro_f1']:.4f}")
     
     return model, config
 

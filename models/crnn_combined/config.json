@@ -1,0 +1,23 @@
+{
+  "train_dir": "data/combined_dataset/train",
+  "val_dir": "data/combined_dataset/val",
+  "output_dir": "models/crnn_combined",
+  "model_type": "crnn",
+  "use_hpss": true,
+  "epochs": 100,
+  "batch_size": 32,
+  "lr": 0.0001,
+  "weight_decay": 0.01,
+  "warmup_ratio": 0.1,
+  "min_lr_ratio": 0.01,
+  "use_focal_loss": true,
+  "focal_gamma": 2.0,
+  "label_smoothing": 0.05,
+  "use_class_weights": true,
+  "patience": 10,
+  "num_workers": 4,
+  "seed": 42,
+  "device": "auto",
+  "max_samples": null,
+  "quick_test": false
+}

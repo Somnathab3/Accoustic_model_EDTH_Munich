@@ -1,0 +1,185 @@
+{
+  "model": "models\\best_model.pt",
+  "validation_dir": "F:\\EDTH\\acoustic-drone-detector\\data\\edth_munich_dataset\\data\\val",
+  "accuracy": 86.66666666666667,
+  "macro_f1": 0.8639647949575311,
+  "weighted_f1": 0.863964794957531,
+  "confusion_matrix": [
+    [
+      60,
+      0,
+      0
+    ],
+    [
+      22,
+      38,
+      0
+    ],
+    [
+      2,
+      0,
+      58
+    ]
+  ],
+  "per_class": {
+    "background": {
+      "correct": 60,
+      "total": 60
+    },
+    "drone": {
+      "correct": 38,
+      "total": 60
+    },
+    "helicopter": {
+      "correct": 58,
+      "total": 60
+    }
+  },
+  "num_errors": 24,
+  "errors": [
+    {
+      "file": "021a92b9.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.5396438837051392
+    },
+    {
+      "file": "041bd5ec.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.5228629112243652
+    },
+    {
+      "file": "1059acc9.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.6237537860870361
+    },
+    {
+      "file": "10effd1a.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.5582404136657715
+    },
+    {
+      "file": "14ea3b6d.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.5148335695266724
+    },
+    {
+      "file": "1dcccba5.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.5871856212615967
+    },
+    {
+      "file": "30b57563.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.5376313328742981
+    },
+    {
+      "file": "3fe1cb4f.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.4495622217655182
+    },
+    {
+      "file": "5f0eeb3f.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.5436440110206604
+    },
+    {
+      "file": "6c2964f9.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.6450812816619873
+    },
+    {
+      "file": "7b295709.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.480217307806015
+    },
+    {
+      "file": "81831469.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.7288166284561157
+    },
+    {
+      "file": "82a81b7d.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.7029816508293152
+    },
+    {
+      "file": "858fdaa7.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.622477114200592
+    },
+    {
+      "file": "a9be2bee.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.5660799145698547
+    },
+    {
+      "file": "ad20f85f.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.6253160834312439
+    },
+    {
+      "file": "aeb169df.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.6144946813583374
+    },
+    {
+      "file": "be4e2fb9.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.49464160203933716
+    },
+    {
+      "file": "c74bf015.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.5532951354980469
+    },
+    {
+      "file": "d0f184ed.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.5027502179145813
+    },
+    {
+      "file": "e2a0abac.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.6247206926345825
+    },
+    {
+      "file": "ed61434d.wav",
+      "true": "drone",
+      "pred": "background",
+      "conf": 0.520765483379364
+    },
+    {
+      "file": "2e4916d8.wav",
+      "true": "helicopter",
+      "pred": "background",
+      "conf": 0.34694352746009827
+    },
+    {
+      "file": "56303b7c.wav",
+      "true": "helicopter",
+      "pred": "background",
+      "conf": 0.4835094213485718
+    }
+  ]
+}

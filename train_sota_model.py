@@ -288,7 +288,7 @@ def main():
                         help='Use HPSS for 3-channel input')
     
     # Training arguments
-    parser.add_argument('--epochs', type=int, default=50,
+    parser.add_argument('--epochs', type=int, default=250,
                         help='Number of training epochs')
     parser.add_argument('--batch-size', type=int, default=32,
                         help='Batch size')

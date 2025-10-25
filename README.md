@@ -1,43 +1,638 @@
-# SOTA Acoustic Drone Detector - Deployment Guide
+# 🎯 SOTA Acoustic Drone Detector - Complete Guide
 
-## 🚀 State-of-the-Art Model for Kaggle/Cloud Deployment
+## 🚀 State-of-the-Art Model for Real-Time Drone Detection
 
-This repository contains a production-ready SOTA (State-of-the-Art) acoustic drone detection model with advanced preprocessing, multiple architectures, and optimized inference.
+This repository contains a production-ready SOTA (State-of-the-Art) acoustic drone detection system with advanced preprocessing, multiple architectures, and optimized inference pipeline.
 
-## Quick Start for Kaggle
+### ⚡ **Ultra-Fast Inference**: 0.2-0.3s latency | **High Accuracy**: 86.67% | **GPU-Accelerated**
 
-### 1. Clone Repository
+---
+
+## 📋 Table of Contents
+
+1. [System Architecture & Process Flow](#system-architecture--process-flow)
+2. [SOTA Process Step-by-Step](#sota-process-step-by-step)
+3. [Quick Start](#quick-start)
+4. [Model Architecture Details](#model-architecture-details)
+5. [Challenge Bot Operation](#challenge-bot-operation)
+6. [Training Pipeline](#training-pipeline)
+7. [Performance & Results](#performance--results)
+
+---
+
+---
+
+## 📊 System Architecture & Process Flow
+
+### 🎯 Overall System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    ACOUSTIC DRONE DETECTION SYSTEM                   │
+└─────────────────────────────────────────────────────────────────────┘
+                                    │
+                    ┌───────────────┴───────────────┐
+                    │                               │
+            ┌───────▼────────┐              ┌──────▼──────┐
+            │  TRAINING      │              │  INFERENCE  │
+            │  PIPELINE      │              │  PIPELINE   │
+            └───────┬────────┘              └──────┬──────┘
+                    │                               │
+        ┌───────────┴──────────┐         ┌─────────┴─────────┐
+        │                      │         │                   │
+   ┌────▼─────┐         ┌─────▼────┐   ┌▼──────────┐  ┌────▼─────┐
+   │   DATA   │         │  MODEL   │   │ REAL-TIME │  │ CHALLENGE│
+   │PREPARATION│         │ TRAINING │   │CLASSIFIER │  │   BOT    │
+   └──────────┘         └──────────┘   └───────────┘  └──────────┘
+```
+
+### 🔄 End-to-End Process Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                          TRAINING PHASE                              │
+└─────────────────────────────────────────────────────────────────────┘
+
+    1. RAW AUDIO               2. PREPROCESSING           3. AUGMENTATION
+┌─────────────────┐        ┌──────────────────┐     ┌─────────────────┐
+│ .wav files      │        │ • Resample 16kHz │     │ • SpecAugment   │
+│ (44.1kHz)       │───────▶│ • HPSS (3-chan)  │────▶│ • Noise mixing  │
+│ Variable length │        │ • Log-Mel (96)   │     │ • Time/Pitch    │
+└─────────────────┘        │ • 2s windows     │     │ • Mixup (α=0.2) │
+                           └──────────────────┘     └─────────────────┘
+                                                              │
+    4. MODEL TRAINING      5. VALIDATION              6. CHECKPOINT
+┌─────────────────┐        ┌──────────────────┐     ┌─────────────────┐
+│ • AdamW optim   │        │ • Macro F1 metric│     │ • best_model.pt │
+│ • Cosine LR     │◀───────│ • Early stopping │────▶│ • panns_final.pt│
+│ • Class balance │        │ • Confusion mat  │     │ • labels.json   │
+│ • Grad clipping │        └──────────────────┘     └─────────────────┘
+└─────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                          INFERENCE PHASE                             │
+└─────────────────────────────────────────────────────────────────────┘
+
+    1. INPUT                   2. PREPROCESS           3. MODEL
+┌─────────────────┐        ┌──────────────────┐     ┌─────────────────┐
+│ Audio file      │        │ Load & resample  │     │ PANNs CNN14     │
+│ (any format)    │───────▶│ HPSS transform   │────▶│ (GPU inference) │
+│ (any length)    │        │ Log-Mel spectrg  │     │ ~0.05s          │
+└─────────────────┘        │ Normalize        │     └────────┬────────┘
+                           └──────────────────┘              │
+    4. POST-PROCESS        5. OUTPUT                         │
+┌─────────────────┐        ┌──────────────────┐             │
+│ Softmax         │        │ Class: "drone"   │             │
+│ Argmax          │◀───────│ Conf: 0.8234     │◀────────────┘
+│ Threshold       │        │ All probs: {...} │
+└─────────────────┘        └──────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                        CHALLENGE BOT FLOW                            │
+└─────────────────────────────────────────────────────────────────────┘
+
+    START                                                          END
+      │                                                             │
+      ▼                                                             │
+┌─────────────┐     ┌──────────────┐     ┌───────────────┐       │
+│ Initialize  │────▶│ Warm-up GPU  │────▶│ Start timing  │       │
+│ - Model     │     │ - Dummy pass │     │ - Reset state │       │
+│ - API       │     │ - Verify GPU │     └───────┬───────┘       │
+└─────────────┘     └──────────────┘             │               │
+                                                  │               │
+                    ┌─────────────────────────────┘               │
+                    │                                             │
+                    ▼                                             │
+    ┌───────────────────────────────────────────┐                │
+    │         MAIN CHALLENGE LOOP               │                │
+    │  ┌─────────────────────────────────────┐  │                │
+    │  │ 1. Fetch Challenge (API)            │  │                │
+    │  │    └─ GET /api/challenge            │  │                │
+    │  │                                     │  │                │
+    │  │ 2. Check Duplicate                  │  │                │
+    │  │    └─ Compare challenge_id          │  │                │
+    │  │       ├─ Same? → Wait & retry       │  │                │
+    │  │       └─ New? → Continue            │  │                │
+    │  │                                     │  │                │
+    │  │ 3. Download Audio                   │  │                │
+    │  │    └─ GET wav_url → temp file       │  │                │
+    │  │                                     │  │                │
+    │  │ 4. Classify (FAST!)                 │  │                │
+    │  │    ├─ Preprocess                    │  │                │
+    │  │    ├─ GPU inference                 │  │                │
+    │  │    └─ Get prediction                │  │                │
+    │  │                                     │  │                │
+    │  │ 5. ⚡ SUBMIT IMMEDIATELY!           │  │                │
+    │  │    └─ POST /api/challenge           │  │                │
+    │  │       (NO DELAYS BEFORE THIS!)      │  │                │
+    │  │                                     │  │                │
+    │  │ 6. Process Result                   │  │                │
+    │  │    ├─ Calculate timing              │  │                │
+    │  │    ├─ Write CSV                     │  │                │
+    │  │    ├─ Store JSON                    │  │                │
+    │  │    └─ Print results                 │  │                │
+    │  │                                     │  │                │
+    │  │ 7. Timing Strategy                  │  │                │
+    │  │    ├─ Score 100-120? → Re-sync      │  │                │
+    │  │    ├─ Pre-sync mode: check 1s       │  │                │
+    │  │    └─ Synced: wait 98s + rapid poll │  │                │
+    │  └─────────────────────────────────────┘  │                │
+    │                   │                        │                │
+    │                   └────────────────────────┤                │
+    └────────────────────────────────────────────┘                │
+                                                                  │
+              Max iterations reached OR Ctrl+C                    │
+                                  │                               │
+                                  ▼                               │
+                    ┌──────────────────────────┐                 │
+                    │ Final Summary & Analysis │────────────────▶┘
+                    │ - Accuracy               │
+                    │ - Total score            │
+                    │ - Per-class performance  │
+                    └──────────────────────────┘
+```
+
+---
+
+## 🎓 SOTA Process Step-by-Step
+
+### Phase 1: Data Preparation & Preprocessing
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                    PREPROCESSING PIPELINE                         │
+└──────────────────────────────────────────────────────────────────┘
+
+INPUT: Raw Audio (44.1 kHz, stereo/mono, variable length)
+   │
+   ▼
+┌─────────────────────────────────────┐
+│ STEP 1: Load & Resample             │
+│ ────────────────────────────────    │
+│ • Load with librosa                 │
+│ • Convert to mono (if stereo)       │
+│ • Resample to 16 kHz                │
+│ • Purpose: Standardize input        │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ STEP 2: HPSS (Optional)             │
+│ ────────────────────────────────    │
+│ • Harmonic-Percussive Separation    │
+│ • Creates 3 channels:               │
+│   1. Harmonic (tonal sounds)        │
+│   2. Percussive (transients)        │
+│   3. Full spectrum                  │
+│ • Purpose: Separate drone/heli      │
+│   harmonics from background         │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ STEP 3: Windowing                   │
+│ ────────────────────────────────    │
+│ • Segment into 2.0s windows         │
+│ • Stride: 50% overlap               │
+│ • Padding: If < 2s, pad with zeros  │
+│ • Purpose: Fixed-size inputs        │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ STEP 4: Log-Mel Spectrogram         │
+│ ────────────────────────────────    │
+│ Parameters:                         │
+│ • n_fft: 1024                       │
+│ • hop_length: 320                   │
+│ • n_mels: 96                        │
+│ • Output: (3, 96, 126) tensor       │
+│   ├─ 3: channels (harmonic/perc)   │
+│   ├─ 96: mel frequency bins         │
+│   └─ 126: time frames               │
+│ • Purpose: Time-frequency repr.     │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ STEP 5: Normalization               │
+│ ────────────────────────────────    │
+│ • Mean: 0.0                         │
+│ • Std: 1.0                          │
+│ • Per-channel normalization         │
+│ • Purpose: Stable training          │
+└────────────┬────────────────────────┘
+             │
+             ▼
+OUTPUT: Tensor (3, 96, 126) ready for model
+```
+
+### Phase 2: Data Augmentation (Training Only)
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                    AUGMENTATION PIPELINE                          │
+└──────────────────────────────────────────────────────────────────┘
+
+INPUT: Spectrogram (3, 96, 126)
+   │
+   ├──────────────────┬──────────────────┬──────────────────┐
+   │                  │                  │                  │
+   ▼                  ▼                  ▼                  ▼
+┌─────────┐    ┌──────────┐      ┌──────────┐      ┌──────────┐
+│SpecAug  │    │  Noise   │      │Time/Pitch│      │  Mixup   │
+│(80%)    │    │ Mixing   │      │ Shift    │      │ (α=0.2)  │
+│         │    │ (SNR)    │      │ (±10%)   │      │          │
+├─────────┤    ├──────────┤      ├──────────┤      ├──────────┤
+│Time mask│    │Add       │      │Simulate  │      │Mix two   │
+│2 bands  │    │background│      │Doppler   │      │samples   │
+│27 frames│    │noise at  │      │effect    │      │λ blend   │
+│         │    │SNR 5-20dB│      │          │      │          │
+│Freq mask│    │          │      │          │      │          │
+│2 bands  │    │          │      │          │      │          │
+│8 mels   │    │          │      │          │      │          │
+└────┬────┘    └─────┬────┘      └─────┬────┘      └─────┬────┘
+     │               │                  │                  │
+     └───────────────┴──────────────────┴──────────────────┘
+                              │
+                              ▼
+              Augmented Spectrogram (3, 96, 126)
+```
+
+### Phase 3: Model Architecture (PANNs CNN14)
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                      PANNs CNN14 ARCHITECTURE                     │
+└──────────────────────────────────────────────────────────────────┘
+
+INPUT: (Batch, 3, 96, 126)
+   │
+   ▼
+┌─────────────────────────────────────┐
+│ Conv Block 1                        │
+│ ─────────────────────────────────   │
+│ Conv2d(3→64, 3x3) + BN + ReLU       │
+│ Conv2d(64→64, 3x3) + BN + ReLU      │
+│ MaxPool2d(2x2) → (64, 48, 63)       │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ Conv Block 2                        │
+│ ─────────────────────────────────   │
+│ Conv2d(64→128, 3x3) + BN + ReLU     │
+│ Conv2d(128→128, 3x3) + BN + ReLU    │
+│ MaxPool2d(2x2) → (128, 24, 31)      │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ Conv Block 3                        │
+│ ─────────────────────────────────   │
+│ Conv2d(128→256, 3x3) + BN + ReLU    │
+│ Conv2d(256→256, 3x3) + BN + ReLU    │
+│ MaxPool2d(2x2) → (256, 12, 15)      │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ Conv Block 4                        │
+│ ─────────────────────────────────   │
+│ Conv2d(256→512, 3x3) + BN + ReLU    │
+│ Conv2d(512→512, 3x3) + BN + ReLU    │
+│ MaxPool2d(2x2) → (512, 6, 7)        │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ Adaptive Pooling                    │
+│ ─────────────────────────────────   │
+│ AdaptiveAvgPool2d(1x1)              │
+│ AdaptiveMaxPool2d(1x1)              │
+│ Concatenate → (1024,)               │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ Classifier Head                     │
+│ ─────────────────────────────────   │
+│ Linear(1024→512) + ReLU + Dropout   │
+│ Linear(512→3) [background/drone/    │
+│                helicopter]          │
+└────────────┬────────────────────────┘
+             │
+             ▼
+OUTPUT: Logits (Batch, 3)
+```
+
+### Phase 4: Training Strategy
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                        TRAINING LOOP                              │
+└──────────────────────────────────────────────────────────────────┘
+
+INITIALIZATION
+├─ Model: PANNs CNN14 (~5M parameters)
+├─ Optimizer: AdamW (lr=0.0001, weight_decay=0.01)
+├─ Scheduler: CosineAnnealingLR (T_max=50)
+├─ Loss: CrossEntropy + Label Smoothing (ε=0.05)
+└─ Class Weights: [1.0, 2.0, 1.5] (balance classes)
+
+FOR each epoch (1 to 50):
+  │
+  ├─ TRAINING PHASE
+  │  └─ For each batch:
+  │     ├─ Forward pass
+  │     ├─ Calculate loss
+  │     ├─ Backward pass
+  │     ├─ Gradient clipping (max_norm=1.0)
+  │     └─ Optimizer step
+  │
+  ├─ VALIDATION PHASE
+  │  └─ For each val batch:
+  │     ├─ Forward pass (no grad)
+  │     ├─ Calculate metrics
+  │     └─ Accumulate results
+  │
+  ├─ METRICS CALCULATION
+  │  ├─ Accuracy
+  │  ├─ Macro F1 Score (main metric)
+  │  ├─ Per-class precision/recall
+  │  └─ Confusion matrix
+  │
+  ├─ CHECKPOINT SAVING
+  │  └─ If val_f1 > best_f1:
+  │     ├─ Save best_model.pt
+  │     ├─ Update best_f1
+  │     └─ Reset patience counter
+  │
+  └─ EARLY STOPPING CHECK
+     └─ If no improvement for 10 epochs:
+        └─ STOP TRAINING
+
+FINAL
+└─ Save panns_final.pt (best checkpoint)
+```
+
+### Phase 5: Inference Pipeline (Challenge Bot)
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                    REAL-TIME INFERENCE FLOW                       │
+└──────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ 1. INITIALIZATION (Once)            │
+│ ─────────────────────────────────   │
+│ • Load model checkpoint             │
+│ • Move to GPU (if available)        │
+│ • Set model.eval() mode             │
+│ • Warm-up GPU with dummy tensor     │
+│ • Initialize API client             │
+│ Time: ~2-3 seconds                  │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ 2. FETCH CHALLENGE (Per request)    │
+│ ─────────────────────────────────   │
+│ • GET /api/challenge                │
+│ • Extract: challenge_id, wav_url    │
+│ • Check for duplicates              │
+│ Time: ~0.02s (network)              │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ 3. DOWNLOAD AUDIO                   │
+│ ─────────────────────────────────   │
+│ • GET wav_url → temp file           │
+│ • Save to disk                      │
+│ Time: ~0.05s (network)              │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ 4. PREPROCESS (Fast)                │
+│ ─────────────────────────────────   │
+│ • Load audio                        │
+│ • Resample to 16kHz                 │
+│ • HPSS (3 channels)                 │
+│ • Log-Mel spectrogram               │
+│ • Normalize                         │
+│ Time: ~0.03s (CPU)                  │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ 5. GPU INFERENCE (Ultra-fast!)      │
+│ ─────────────────────────────────   │
+│ • Move tensor to GPU                │
+│ • Forward pass (no gradient)        │
+│ • Softmax probabilities             │
+│ • Argmax for prediction             │
+│ Time: ~0.05s (GPU)                  │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ 6. ⚡ SUBMIT RESULT (CRITICAL!)     │
+│ ─────────────────────────────────   │
+│ • POST /api/challenge               │
+│ • Payload: {challenge_id, class}    │
+│ • NO DELAYS BEFORE THIS!            │
+│ Time: ~0.02s (network)              │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ 7. POST-PROCESSING (After submit)   │
+│ ─────────────────────────────────   │
+│ • Calculate timing                  │
+│ • Write to CSV                      │
+│ • Store JSONL                       │
+│ • Print results                     │
+│ • Update statistics                 │
+│ Time: ~0.01s (doesn't affect score) │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ 8. TIMING STRATEGY                  │
+│ ─────────────────────────────────   │
+│ • Score 100-120? → Reset to 1s      │
+│ • Pre-sync: Check every 1s          │
+│ • Synced: Wait 98s + rapid poll     │
+└─────────────────────────────────────┘
+
+TOTAL TIME: ~0.20-0.30s per challenge
+```
+
+### Phase 6: Scoring & Timing Strategy
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                       SCORING MECHANISM                           │
+└──────────────────────────────────────────────────────────────────┘
+
+SCORE CALCULATION:
+├─ Base Score (Correctness):
+│  ├─ Correct prediction: 100 points
+│  └─ Wrong prediction: 100 points (participation)
+│  ├─ Correct prediction: 100 points
+│  └─ Wrong prediction: 100 points (participation)
+│
+├─ Speed Bonus (Response Time):
+│  ├─ < 0.5s: +50 points (EXCELLENT)
+│  ├─ 0.5-1.0s: +20-40 points (GOOD)
+│  ├─ 1.0-2.0s: +10-20 points (OK)
+│  └─ > 2.0s: 0 bonus (SLOW)
+│
+└─ TOTAL SCORE: Base + Speed Bonus
+   ├─ Perfect (fast): 150 points
+   ├─ Perfect (slow): 100 points
+   └─ Wrong: 100 points
+
+TIMING STRATEGY:
+┌──────────────────────────────────────┐
+│ MODE 1: PRE-SYNC (Initial)           │
+│ ──────────────────────────────────   │
+│ • Check every 1 second               │
+│ • Wait for first score > 0           │
+│ • Learn challenge timing             │
+│ • Exit: When synced                  │
+└──────────────────────────────────────┘
+         │
+         │ First score received
+         ▼
+┌──────────────────────────────────────┐
+│ MODE 2: SYNCED (Optimized)           │
+│ ──────────────────────────────────   │
+│ • Wait 98 seconds after last score   │
+│ • Enter rapid polling (0.1s)         │
+│ • Poll for 2 seconds window          │
+│ • Catch new challenge early!         │
+│ • Exit: Score 100-120 detected       │
+└──────────────────────────────────────┘
+         │
+         │ Score 100-120 (mistimed)
+         ▼
+┌──────────────────────────────────────┐
+│ MODE 3: RE-SYNC (Recovery)           │
+│ ──────────────────────────────────   │
+│ • Reset to MODE 1                    │
+│ • Check every 1 second again         │
+│ • Re-learn timing                    │
+│ • Exit: Good score received          │
+└──────────────────────────────────────┘
+```
+
+---
+
+## ⚡ Quick Start
+
+### Option 1: Kaggle (Recommended)
+
+**Step 1: Setup Environment**
 ```bash
+# Clone repository
 !git clone https://github.com/Somnathab3/edth-acoustic-drone-detector.git
 %cd edth-acoustic-drone-detector
-```
 
-### 2. Install Dependencies
-```bash
+# Install dependencies
 !pip install -q -r requirements.txt
+
+# Enable GPU (Settings → Accelerator → GPU T4 x2)
+# Enable Internet (Settings → Internet → On)
+# Enable GPU (Settings → Accelerator → GPU T4 x2)
+# Enable Internet (Settings → Internet → On)
 ```
 
-### 3. Download Model (Auto-detect)
+**Step 2: Verify GPU**
 ```python
-# Model auto-detection: uses best available
-# - panns_final.pt (fully trained, best performance)
-# - best_model.pt (training checkpoint, good performance)
+import torch
+print(f"GPU Available: {torch.cuda.is_available()}")
+print(f"Device: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}")
+# Expected: GPU Available: True, Device: Tesla T4
 ```
 
-### 4. Run Challenge Bot
+**Step 3: Run Challenge Bot**
 ```bash
-# Fast mode (recommended)
-!python sota_challenge_bot.py --delay 0.5 --max-iterations 1000
+# Auto-detect model and start (recommended)
+!python sota_challenge_bot.py --delay 0.5
 
-# Or let it run continuously
-!python sota_challenge_bot.py
+# Or run overnight (max iterations)
+!python sota_challenge_bot.py --max-iterations 10000 --delay 0.5
 ```
 
-## 📊 Model Architecture
+**Step 4: Monitor Results**
+```python
+# View real-time results
+!tail -f challenge_results/results.csv
 
-### Three-Tier System
+# Analyze performance
+!python analyze_results.py
+```
 
-#### 1. **CRNN with Attention** (~1.5M params)
+### Option 2: Local Machine
+
+**Prerequisites:**
+- Python 3.8+
+- CUDA-capable GPU (recommended)
+- 4GB+ RAM
+
+**Installation:**
+```bash
+git clone https://github.com/Somnathab3/edth-acoustic-drone-detector.git
+cd edth-acoustic-drone-detector
+pip install -r requirements.txt
+```
+
+**Run:**
+```bash
+# Verify GPU
+python check_gpu.py
+
+# Run challenge bot
+python sota_challenge_bot.py --delay 0.5
+
+# Analyze results
+python analyze_results.py
+```
+
+---
+
+---
+
+## 🏗️ Model Architecture Details
+
+### Architecture Comparison
+
+### Architecture Comparison
+
+```
+┌─────────────┬──────────────┬──────────────┬──────────────┬──────────────┐
+│ Architecture│  Parameters  │ Inference    │  Accuracy    │   Use Case   │
+│             │              │  Time (GPU)  │              │              │
+├─────────────┼──────────────┼──────────────┼──────────────┼──────────────┤
+│ CRNN        │   ~1.5M      │   ~30ms      │    82-84%    │ Edge/Mobile  │
+│ + Attention │              │   (FAST)     │   (Good)     │  Real-time   │
+├─────────────┼──────────────┼──────────────┼──────────────┼──────────────┤
+│ PANNs CNN14 │   ~5M        │   ~50ms      │    86-87%    │ Server/Cloud │
+│ ⭐ DEFAULT  │  (Balanced)  │  (OPTIMAL)   │  (Excellent) │ ⭐ RECOMMENDED│
+├─────────────┼──────────────┼──────────────┼──────────────┼──────────────┤
+│ Audio       │   ~20M       │   ~150ms     │    88-90%    │ Offline      │
+│ Transformer │   (Large)    │   (SLOW)     │  (Best)      │  Analysis    │
+└─────────────┴──────────────┴──────────────┴──────────────┴──────────────┘
+```
+
+### Detailed Architecture Breakdown
+
+#### 1. **CRNN with Attention** (Fast & Lightweight)
 - Fast inference (~50ms)
 - Good for edge deployment
 - 3 conv blocks + BiGRU + Temporal-Frequency attention
