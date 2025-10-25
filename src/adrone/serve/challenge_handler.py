@@ -219,7 +219,7 @@ class ChallengeAPIClient:
         """Fetch current challenge"""
         response = self.session.get(
             f"{self.api_base_url}/api/challenge",
-            timeout=5
+            timeout=100  # Increased to 100s to handle very slow server responses
         )
         response.raise_for_status()
         return response.json()
@@ -234,7 +234,7 @@ class ChallengeAPIClient:
         response = self.session.post(
             f"{self.api_base_url}/api/challenge",
             json=payload,
-            timeout=5
+            timeout=100  # Increased to 100s to handle very slow server responses
         )
         response.raise_for_status()
         return response.json()
@@ -242,7 +242,7 @@ class ChallengeAPIClient:
     def download_audio(self, wav_url: str, output_path: str) -> bool:
         """Download audio file from challenge"""
         full_url = f"{self.api_base_url}{wav_url}"
-        response = self.session.get(full_url, timeout=10)
+        response = self.session.get(full_url, timeout=100)  # Increased to 100s
         response.raise_for_status()
         
         with open(output_path, 'wb') as f:

@@ -1,0 +1,22 @@
+{
+  "model_type": "crnn",
+  "num_classes": 3,
+  "input_channels": 3,
+  "n_mels": 96,
+  "time_frames": 129,
+  "input_shape": [
+    1,
+    3,
+    96,
+    129
+  ],
+  "normalization": "per_sample",
+  "quantization": "dynamic_int8",
+  "labels": [
+    "background",
+    "drone",
+    "helicopter"
+  ],
+  "original_checkpoint": "F:\\EDTH\\acoustic-drone-detector\\models\\crnn_combined\\crnn_final.pt",
+  "export_format": "executorch_pte"
+}

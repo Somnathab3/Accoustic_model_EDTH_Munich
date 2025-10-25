@@ -88,8 +88,9 @@ class CleanChallengeBot:
                 writer = csv.writer(f)
                 writer.writerow([
                     'iteration', 'timestamp', 'challenge_id', 
-                    'predicted', 'actual', 'correct', 
-                    'confidence', 'score_awarded', 
+                    'predicted', 'actual', 'correct_inferred', 
+                    'confidence', 'score_awarded', 'total_score',
+                    'success', 'api_message',
                     'inference_time', 'total_time'
                 ])
         
@@ -98,11 +99,11 @@ class CleanChallengeBot:
         self.total_time = 0.0
         self.start_time = time.time()
         
-        # Smart timing for score-based synchronization
-        self.last_score_time = None  # When we last got a score
+        # Smart timing using server's time_until_next_rotation_ms
         self.last_challenge_id = None  # Track last challenge to detect duplicates
         self.wait_for_new_challenge = False  # Flag to wait for new challenge
-        self.first_score_received = False  # Track if we've ever received a score
+        self.next_rotation_time = None  # Server-provided time until next challenge (seconds)
+        self.last_challenge_time = None  # When we received the timing info
         
         print("✓ Initialization complete\n")
     
@@ -120,6 +121,20 @@ class CleanChallengeBot:
             challenge = self.api_client.get_challenge()
             challenge_id = challenge['challenge_id']
             wav_url = challenge['wav_url']
+            time_until_next_ms = challenge.get('time_until_next_rotation_ms', None)
+            
+            # Store the timing information from server
+            # This is the server's countdown to NEXT challenge rotation from NOW
+            # We submit to the CURRENT challenge immediately, then wait this time for the next one
+            if time_until_next_ms is not None:
+                self.next_rotation_time = time_until_next_ms / 1000.0  # Convert ms to seconds
+                self.last_challenge_time = time.time()  # Record when we got this info
+                print(f"⏱️  Server reports NEXT challenge will be ready in {self.next_rotation_time:.1f}s")
+            else:
+                # No timing provided, use default 100s
+                self.next_rotation_time = 100.0
+                self.last_challenge_time = time.time()
+                print(f"⏱️  No timing data, assuming 100s cycle")
             
             # Check if this is the same challenge (already submitted)
             if challenge_id == self.last_challenge_id:
@@ -139,13 +154,80 @@ class CleanChallengeBot:
             inference_time = time.time() - inference_start
             
             # Submit prediction IMMEDIATELY for speed bonus (don't wait for anything)
+            print(f"📤 Submitting: {prediction} (confidence: {confidence:.3f})")
             try:
                 result = self.api_client.submit_classification(challenge_id, prediction)
+                
+                # Print full API response for debugging
+                print(f"� API Response:")
+                import json
+                for key, value in result.items():
+                    print(f"   {key}: {value}")
+                print()
+                
             except Exception as e:
                 error_msg = str(e)
                 
+                # Check if it's a timeout error
+                if "timed out" in error_msg.lower() or "timeout" in error_msg.lower():
+                    print(f"⚠️  Submission timeout - server may be slow, continuing...")
+                    # Don't fail, just record what we can and move on
+                    result = {
+                        'correct': False,
+                        'score_awarded': 0,
+                        'total_score': 0,
+                        'actual_classification': 'unknown',
+                        'success': False,
+                        'message': 'timeout',
+                        'error': 'timeout'
+                    }
+                    is_correct = False
+                    score_awarded = 0
+                    total_score = 0
+                    actual_label = 'unknown'
+                    success = False
+                    api_message = 'timeout'
+                    
+                    # Still mark as processed to avoid resubmission
+                    self.last_challenge_id = challenge_id
+                    self.wait_for_new_challenge = False
+                    
+                    # Update statistics
+                    self.iteration += 1
+                    total_time = time.time() - iter_start
+                    self.total_time += total_time
+                    
+                    # Write to CSV
+                    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    with open(self.csv_path, 'a', newline='') as f:
+                        writer = csv.writer(f)
+                        writer.writerow([
+                            self.iteration,
+                            timestamp,
+                            challenge_id,
+                            prediction,
+                            actual_label,
+                            is_correct,
+                            f"{confidence:.4f}",
+                            score_awarded,
+                            total_score,
+                            success,
+                            api_message,
+                            f"{inference_time:.4f}",
+                            f"{total_time:.4f}"
+                        ])
+                    
+                    # Clean up temp file
+                    try:
+                        os.unlink(tmp_path)
+                    except:
+                        pass
+                    
+                    # Continue to next challenge
+                    return True
+                
                 # Check if already submitted
-                if "already submitted" in error_msg.lower():
+                elif "already submitted" in error_msg.lower():
                     print(f"⚠️  Already submitted for challenge {challenge_id[:8]}...")
                     self.last_challenge_id = challenge_id
                     self.wait_for_new_challenge = True
@@ -163,30 +245,21 @@ class CleanChallengeBot:
             total_time = time.time() - iter_start
             
             # Now process result and log (after submission to maximize speed)
-            is_correct = result.get('correct', False)
+            # NOTE: API does NOT provide 'correct' or 'actual_classification' fields!
+            # We only get: success, message, score_awarded, total_score
             score_awarded = result.get('score_awarded', 0)
-            actual_label = result.get('actual_classification', 'unknown')
+            total_score = result.get('total_score', 0)
+            success = result.get('success', True)
+            api_message = result.get('message', '')
+            
+            # Infer if correct based on score_awarded (scores > 0 mean correct)
+            is_correct = score_awarded > 0
+            actual_label = 'unknown'  # API doesn't provide this
             
             # Check if we got any response (score or not)
             # This means it's a real new challenge, not a duplicate
             self.last_challenge_id = challenge_id
             self.wait_for_new_challenge = False
-            
-            # Track first SUCCESSFUL score to enable syncing
-            if score_awarded > 0:
-                if not self.first_score_received:
-                    self.first_score_received = True
-                    self.last_score_time = time.time()
-                    print(f"🎯 First score received! Now synced with server timing...")
-                else:
-                    # Check if we got a score between 100-120 (mistimed response)
-                    if 100 <= score_awarded <= 120:
-                        print(f"⚠️  Score {score_awarded} indicates mistiming! Resetting to pre-sync mode...")
-                        self.first_score_received = False  # Reset to pre-sync mode (1s checks)
-                        self.last_score_time = None
-                    else:
-                        self.last_score_time = time.time()
-                        print(f"🎯 Score received! Re-syncing timing...")
             
             # Update statistics
             self.iteration += 1
@@ -205,6 +278,9 @@ class CleanChallengeBot:
                     is_correct,
                     f"{confidence:.4f}",
                     score_awarded,
+                    total_score,
+                    success,
+                    api_message,
                     f"{inference_time:.4f}",
                     f"{total_time:.4f}"
                 ])
@@ -225,11 +301,20 @@ class CleanChallengeBot:
             
             # Print result
             status = "✓" if is_correct else "✗"
-            print(f"[{self.iteration}] {status} Predicted: {prediction:11s} | "
-                  f"Actual: {actual_label:11s} | "
-                  f"Conf: {confidence:.3f} | "
-                  f"Score: +{score_awarded:3d} | "
-                  f"Time: {total_time:.2f}s")
+            if is_correct:
+                print(f"[{self.iteration}] {status} Predicted: {prediction:11s} | "
+                      f"Score: +{score_awarded:3d} | Total: {total_score:4d} | "
+                      f"Conf: {confidence:.3f} | "
+                      f"Time: {total_time:.2f}s")
+            else:
+                print(f"[{self.iteration}] {status} Predicted: {prediction:11s} | "
+                      f"Score: +{score_awarded:3d} (WRONG) | Total: {total_score:4d} | "
+                      f"Conf: {confidence:.3f} | "
+                      f"Time: {total_time:.2f}s")
+            
+            # Print API message if present and interesting
+            if api_message and api_message not in ['', 'Success']:
+                print(f"     API: {api_message}")
             
             # Print probabilities for debugging (only if wrong)
             if not is_correct:
@@ -252,19 +337,20 @@ class CleanChallengeBot:
     
     def run(self, max_iterations: int = None, delay: float = 0.0):
         """
-        Run the challenge bot with AGGRESSIVE TIMING for maximum speed
+        Run the challenge bot with SERVER-SYNCHRONIZED TIMING
+        
+        Uses time_until_next_rotation_ms from API response for optimal timing
         
         Args:
             max_iterations: Maximum number of iterations (None = infinite)
             delay: Base delay between challenges (0.0 for fastest)
         """
         print("="*60)
-        print("⚡ SPEED MODE CHALLENGE BOT - AGGRESSIVE TIMING")
+        print("🎯 SERVER-SYNCED CHALLENGE BOT")
         print("="*60)
         print(f"Max iterations: {max_iterations if max_iterations else 'Infinite'}")
-        print(f"Base delay: {delay}s")
-        print(f"Pre-sync mode: Check every 1s until first score > 0")
-        print(f"⚡ SPEED mode: Wait 98s + rapid poll 4x/sec for 2s")
+        print(f"Strategy: Wait for server's time_until_next_rotation_ms")
+        print(f"No burst polling - clean single requests at optimal timing")
         print("="*60 + "\n")
         
         iteration_count = 0
@@ -287,69 +373,66 @@ class CleanChallengeBot:
                     if iteration_count % 10 == 0:
                         self.print_summary()
                     
-                    # Use base delay
-                    if delay > 0:
-                        time.sleep(delay)
+                    # USE SERVER-PROVIDED TIMING FOR NEXT CHALLENGE
+                    if self.next_rotation_time is not None and self.last_challenge_time is not None:
+                        # Calculate how much time has passed since we got the timing info
+                        elapsed = time.time() - self.last_challenge_time
+                        
+                        # Use EXACT server timing - no buffer added
+                        # The server's time_until_next_rotation_ms already accounts for everything
+                        remaining_time = self.next_rotation_time - elapsed
+                        
+                        if remaining_time > 1.0:
+                            print(f"⏳ Waiting {remaining_time:.1f}s for next challenge (server timing)")
+                            print(f"   Will check for new challenge at: {time.strftime('%H:%M:%S', time.localtime(time.time() + remaining_time))}")
+                            time.sleep(remaining_time)
+                            print(f"✓ Checking for new challenge now...")
+                        elif remaining_time > 0:
+                            # Small remaining time, still wait
+                            print(f"⏱️  Short wait: {remaining_time:.1f}s...")
+                            time.sleep(remaining_time)
+                        else:
+                            # Already past expected time, check immediately
+                            print(f"✓ Challenge should be ready (past server timing by {-remaining_time:.1f}s)")
+                    else:
+                        # No timing info, use base delay
+                        if delay > 0:
+                            time.sleep(delay)
                 else:
                     consecutive_failures += 1
                     
                     # If we're waiting for a new challenge (duplicate detected)
                     if self.wait_for_new_challenge:
-                        # BEFORE first score: Check frequently (every 1s) until we get initial sync
-                        if not self.first_score_received:
-                            check_interval = 1.0
-                            print(f"🔍 Checking for new challenge in {check_interval:.0f}s (pre-sync mode)...")
-                            time.sleep(check_interval)
-                        else:
-                            # AGGRESSIVE TIMING: Wait 99s, then rapid-fire polling
-                            base_wait = 99.0  # Wait 99s to position before new challenge
-                            rapid_poll_window = 3.0  # 3s window for rapid polling
+                        # USE SERVER TIMING if available
+                        if self.next_rotation_time is not None and self.last_challenge_time is not None:
+                            elapsed = time.time() - self.last_challenge_time
+                            remaining_time = self.next_rotation_time - elapsed  # No buffer
                             
-                            # Calculate time since last score
-                            if self.last_score_time:
-                                time_since_score = time.time() - self.last_score_time
-                                
-                                if time_since_score < base_wait:
-                                    # Normal wait until 98s mark
-                                    remaining_wait = base_wait - time_since_score
-                                    print(f"⏳ Positioning for next challenge in {remaining_wait:.0f}s...")
-                                    time.sleep(remaining_wait)
-                                    
-                                    # Now enter rapid polling phase
-                                    print(f"⚡ RAPID POLLING MODE: Checking every 0.05s for new challenge...")
-                                    self.wait_for_new_challenge = False
-                                    continue  # Skip to next iteration immediately
-                                    
-                                elif time_since_score < (base_wait + rapid_poll_window):
-                                    # In rapid polling window (98-100s)
-                                    print(f"⚡ Rapid poll #{int(time_since_score - base_wait) * 10}...")
-                                    time.sleep(0.05)  # Check 10 times per second
-                                    self.wait_for_new_challenge = False
-                                    continue
-                                    
-                                else:
-                                    # Past 100s, reset and wait full cycle
-                                    print(f"⏳ Cycle complete, repositioning in 98s...")
-                                    time.sleep(base_wait)
-                                    print(f"⚡ RAPID POLLING MODE: Checking every 0.05s for new challenge...")
-                                    self.wait_for_new_challenge = False
-                                    continue
+                            if remaining_time > 1.0:
+                                # Wait for the full server-reported duration
+                                print(f"⏳ Duplicate detected - waiting {remaining_time:.1f}s (server timing)")
+                                time.sleep(remaining_time)
+                                print(f"✓ Checking for new challenge now...")
                             else:
-                                # First time, wait full 98s
-                                print(f"⏳ Initial positioning in {base_wait:.0f}s...")
-                                time.sleep(base_wait)
-                                print(f"⚡ RAPID POLLING MODE: Checking every 0.05s for new challenge...")
+                                # Already at or past expected time, wait a bit and retry
+                                wait_time = max(2.0, remaining_time)
+                                print(f"⏱️  Waiting {wait_time:.1f}s for new challenge...")
+                                time.sleep(wait_time)
+                        else:
+                            # NO SERVER TIMING - Use simple 2s retry
+                            print(f"🔍 No timing data - checking again in 2s...")
+                            time.sleep(2.0)
                         
                         self.wait_for_new_challenge = False  # Reset flag
                     
                     # If multiple consecutive failures, increase delay
                     elif consecutive_failures >= 3:
-                        backoff_delay = min(delay * (2 ** (consecutive_failures - 2)), 30.0)
+                        backoff_delay = min(5.0 * (2 ** (consecutive_failures - 3)), 30.0)
                         print(f"⚠️  Multiple failures detected, backing off for {backoff_delay:.1f}s...")
                         time.sleep(backoff_delay)
                     else:
-                        # Normal retry with base delay
-                        time.sleep(delay)
+                        # Normal retry with short delay
+                        time.sleep(1.0)
         
         except KeyboardInterrupt:
             print("\n\n⏹️  Stopped by user")

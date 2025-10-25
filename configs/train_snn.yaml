@@ -1,0 +1,139 @@
+# SNN-based Acoustic Drone Classifier Configuration
+# HPCNeuroNetLite: Transformer + Spiking Neural Network
+
+# Model Architecture
+model:
+  type: 'snn'  # or 'hpc_snn'
+  num_classes: 3  # drone, helicopter, background
+  input_channels: 3  # total, harmonic, percussive (HPSS)
+  
+  # Transformer settings
+  patch_size: 16
+  embed_dim: 384
+  depth: 6  # Number of transformer layers (reduce to 4 for faster training)
+  num_heads: 6
+  mlp_ratio: 4.0
+  dropout: 0.1
+  
+  # SNN-specific settings
+  snn_timesteps: 4  # Number of spike simulation steps (2-8 typical)
+  use_ttfs: false  # false=rate coding, true=time-to-first-spike
+  spike_slope: 25.0  # Surrogate gradient slope (10-50)
+
+# Audio Preprocessing
+audio:
+  sample_rate: 16000
+  duration: 3.0  # seconds
+  
+  # STFT settings (matching HPCNeuroNet paper)
+  n_fft: 512
+  hop_length: 128
+  win_length: 512
+  window: 'hann'
+  
+  # Alternative: Mel spectrogram
+  use_mel: true  # Set to false for raw STFT
+  n_mels: 96
+  f_min: 20
+  f_max: 8000
+  
+  # HPSS (Harmonic-Percussive Source Separation)
+  use_hpss: true
+  hpss_kernel_size: 31
+  hpss_power: 2.0
+  hpss_margin: 1.0
+
+# Data Augmentation
+augmentation:
+  spec_augment: true
+  time_mask_param: 30
+  freq_mask_param: 15
+  n_time_masks: 2
+  n_freq_masks: 2
+  
+  # Audio augmentations
+  noise_injection: true
+  noise_level: 0.005
+  time_shift: true
+  time_shift_max: 0.2  # 20% of audio length
+  
+  mixup: true
+  mixup_alpha: 0.4
+
+# Training
+training:
+  epochs: 50
+  batch_size: 32  # Reduce if OOM (SNN can be memory-intensive)
+  
+  # Optimizer
+  optimizer: 'adamw'
+  lr: 0.0001  # Start lower for SNN stability
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+  
+  # Learning rate schedule
+  scheduler: 'cosine'
+  warmup_epochs: 5
+  min_lr: 0.000001
+  
+  # Loss
+  loss: 'cross_entropy'
+  label_smoothing: 0.1
+  class_weights: null  # Auto-compute from data or [1.0, 1.0, 1.0]
+  
+  # Regularization
+  gradient_clip: 1.0
+  mixed_precision: true  # Keep LIF state in fp32 internally
+  
+  # Early stopping
+  patience: 10
+  min_delta: 0.001
+
+# Validation
+validation:
+  val_split: 0.2
+  eval_every: 1  # epochs
+  save_best: true
+  metric: 'f1_macro'  # or 'accuracy', 'loss'
+
+# Hardware
+device: 'cuda'  # or 'cpu'
+num_workers: 4
+pin_memory: true
+
+# Logging
+logging:
+  log_dir: './logs/snn'
+  save_dir: './models/snn'
+  experiment_name: 'hpc_neuronet_lite'
+  log_every: 10  # batches
+  
+  # Metrics to track
+  metrics:
+    - 'accuracy'
+    - 'precision_macro'
+    - 'recall_macro'
+    - 'f1_macro'
+    - 'confusion_matrix'
+    - 'per_class_f1'
+    - 'spike_rate'  # Average spike rate (SNN-specific)
+    - 'energy_estimate'  # Spike-based energy estimate
+
+# Dataset
+data:
+  train_path: './data/edth_prepared/train'
+  val_path: './data/edth_prepared/val'
+  test_path: './data/edth_prepared/test'
+  
+  # Class mapping
+  classes:
+    0: 'background'
+    1: 'drone'
+    2: 'helicopter'
+
+# Neuromorphic Deployment (optional)
+deployment:
+  target_hardware: 'cpu'  # 'cpu', 'gpu', 'loihi', 'spinnaker'
+  max_latency_ms: 100  # Target latency per 1s audio
+  quantize: false  # Quantize weights for edge deployment
+  export_format: 'torchscript'  # or 'onnx'

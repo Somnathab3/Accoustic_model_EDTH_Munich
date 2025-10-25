@@ -76,7 +76,7 @@ class AcousticDroneClassifier:
         print(f"  Device: {self.device}")
         print(f"  Classes: {list(self.class_to_idx.keys())}")
     
-    def _load_model(self, model_path: str, use_hpss: bool):
+    def _load_model(self, model_path: str, use_hpss: bool = True):
         """Load model from checkpoint"""
         checkpoint = torch.load(model_path, map_location=self.device)
         
@@ -86,18 +86,38 @@ class AcousticDroneClassifier:
             input_channels = checkpoint.get('input_channels', 3 if use_hpss else 1)
             n_mels = checkpoint.get('n_mels', 96)
         else:
-            # Legacy checkpoint format
-            model_type = 'panns'
+            # Legacy checkpoint format - auto-detect from state_dict keys
+            state_dict_keys = list(checkpoint['model_state_dict'].keys())
+            
+            # Check for CRNN-specific keys
+            if any('gru' in key for key in state_dict_keys) or any('attention' in key for key in state_dict_keys):
+                model_type = 'crnn'
+                print("  Auto-detected CRNN model from state_dict keys")
+            else:
+                model_type = 'panns'
+                print("  Auto-detected PANNs model from state_dict keys")
+            
             input_channels = 3 if use_hpss else 1
             n_mels = 96
         
-        # Create model
-        model = create_model(
-            model_type=model_type,
-            num_classes=self.num_classes,
-            input_channels=input_channels,
-            n_mels=n_mels
-        )
+        print(f"  Model type: {model_type.upper()}")
+        print(f"  Input channels: {input_channels}")
+        print(f"  N_mels: {n_mels}")
+        
+        # Create model with correct parameters
+        if model_type == 'crnn':
+            model = create_model(
+                model_type=model_type,
+                num_classes=self.num_classes,
+                input_channels=input_channels,
+                n_mels=n_mels
+            )
+        else:
+            model = create_model(
+                model_type=model_type,
+                num_classes=self.num_classes,
+                input_channels=input_channels
+            )
         
         # Load weights
         model.load_state_dict(checkpoint['model_state_dict'])

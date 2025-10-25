@@ -1,0 +1,254 @@
+================================================================================
+COMPREHENSIVE MODEL EVALUATION SUMMARY
+Generated: 2025-10-25 17:40:59
+================================================================================
+
+MODELS EVALUATED:
+  - CRNN
+  - SNN
+  - TRANSFORMER
+  - PANNS
+
+Total Models: 4
+
+DATASET:
+  Training samples: 767
+  Validation samples: 288
+
+================================================================================
+COMPARISON TABLE
+================================================================================
+      Model Train Accuracy Train F1 Train Precision Train Recall Val Accuracy Val F1 Val Precision Val Recall Train Efficiency (samples/s) Val Efficiency (samples/s) Avg Inference Time (ms)  Train Samples  Val Samples
+       CRNN         0.9179   0.9175          0.9209       0.9179       0.9722 0.9723        0.9732     0.9722                        12.49                      15.50                   64.51            767          288
+      PANNS         0.7875   0.7825          0.8120       0.7875       0.8646 0.8598        0.8929     0.8646                        13.60                      13.52                   73.95            767          288
+TRANSFORMER         0.5958   0.5784          0.5747       0.5958       0.6597 0.6474        0.6454     0.6597                        11.47                      11.53                   86.76            767          288
+        SNN         0.5906   0.5334          0.5524       0.5906       0.6493 0.5981        0.6350     0.6493                        12.74                      12.60                   79.35            767          288
+
+================================================================================
+BEST MODEL
+================================================================================
+Model: CRNN
+Validation Accuracy: 0.9722
+Validation F1-Score: 0.9723
+Inference Time: 64.51 ms
+
+================================================================================
+DETAILED METRICS PER MODEL
+================================================================================
+
+
+CRNN
+--------------------------------------------------------------------------------
+
+TRAINING SET:
+  Accuracy: 0.9179
+  Precision: 0.9209
+  Recall: 0.9179
+  F1-Score: 0.9175
+  Correct: 704/767
+
+  Per-class metrics:
+    background:
+      Precision: 0.9056
+      Recall: 0.8903
+      F1-Score: 0.8979
+      Support: 237
+    drone:
+      Precision: 0.9703
+      Recall: 0.8707
+      F1-Score: 0.9178
+      Support: 263
+    helicopter:
+      Precision: 0.8859
+      Recall: 0.9888
+      F1-Score: 0.9345
+      Support: 267
+
+VALIDATION SET:
+  Accuracy: 0.9722
+  Precision: 0.9732
+  Recall: 0.9722
+  F1-Score: 0.9723
+  Correct: 280/288
+
+  Per-class metrics:
+    background:
+      Precision: 0.9333
+      Recall: 0.9767
+      F1-Score: 0.9545
+      Support: 86
+    drone:
+      Precision: 1.0000
+      Recall: 0.9515
+      F1-Score: 0.9751
+      Support: 103
+    helicopter:
+      Precision: 0.9800
+      Recall: 0.9899
+      F1-Score: 0.9849
+      Support: 99
+
+  Failed predictions: 71
+
+
+SNN
+--------------------------------------------------------------------------------
+
+TRAINING SET:
+  Accuracy: 0.5906
+  Precision: 0.5524
+  Recall: 0.5906
+  F1-Score: 0.5334
+  Correct: 453/767
+
+  Per-class metrics:
+    background:
+      Precision: 0.6163
+      Recall: 0.8608
+      F1-Score: 0.7183
+      Support: 237
+    drone:
+      Precision: 0.4458
+      Recall: 0.1407
+      F1-Score: 0.2139
+      Support: 263
+    helicopter:
+      Precision: 0.6006
+      Recall: 0.7940
+      F1-Score: 0.6839
+      Support: 267
+
+VALIDATION SET:
+  Accuracy: 0.6493
+  Precision: 0.6350
+  Recall: 0.6493
+  F1-Score: 0.5981
+  Correct: 187/288
+
+  Per-class metrics:
+    background:
+      Precision: 0.6560
+      Recall: 0.9535
+      F1-Score: 0.7773
+      Support: 86
+    drone:
+      Precision: 0.5946
+      Recall: 0.2136
+      F1-Score: 0.3143
+      Support: 103
+    helicopter:
+      Precision: 0.6587
+      Recall: 0.8384
+      F1-Score: 0.7378
+      Support: 99
+
+  Failed predictions: 415
+
+
+TRANSFORMER
+--------------------------------------------------------------------------------
+
+TRAINING SET:
+  Accuracy: 0.5958
+  Precision: 0.5747
+  Recall: 0.5958
+  F1-Score: 0.5784
+  Correct: 457/767
+
+  Per-class metrics:
+    background:
+      Precision: 0.6653
+      Recall: 0.6962
+      F1-Score: 0.6804
+      Support: 237
+    drone:
+      Precision: 0.4301
+      Recall: 0.3042
+      F1-Score: 0.3563
+      Support: 263
+    helicopter:
+      Precision: 0.6366
+      Recall: 0.7940
+      F1-Score: 0.7067
+      Support: 267
+
+VALIDATION SET:
+  Accuracy: 0.6597
+  Precision: 0.6454
+  Recall: 0.6597
+  F1-Score: 0.6474
+  Correct: 190/288
+
+  Per-class metrics:
+    background:
+      Precision: 0.7158
+      Recall: 0.7907
+      F1-Score: 0.7514
+      Support: 86
+    drone:
+      Precision: 0.5385
+      Recall: 0.4078
+      F1-Score: 0.4641
+      Support: 103
+    helicopter:
+      Precision: 0.6957
+      Recall: 0.8081
+      F1-Score: 0.7477
+      Support: 99
+
+  Failed predictions: 408
+
+
+PANNS
+--------------------------------------------------------------------------------
+
+TRAINING SET:
+  Accuracy: 0.7875
+  Precision: 0.8120
+  Recall: 0.7875
+  F1-Score: 0.7825
+  Correct: 604/767
+
+  Per-class metrics:
+    background:
+      Precision: 0.7173
+      Recall: 0.8565
+      F1-Score: 0.7808
+      Support: 237
+    drone:
+      Precision: 0.9401
+      Recall: 0.5970
+      F1-Score: 0.7302
+      Support: 263
+    helicopter:
+      Precision: 0.7697
+      Recall: 0.9139
+      F1-Score: 0.8356
+      Support: 267
+
+VALIDATION SET:
+  Accuracy: 0.8646
+  Precision: 0.8929
+  Recall: 0.8646
+  F1-Score: 0.8598
+  Correct: 249/288
+
+  Per-class metrics:
+    background:
+      Precision: 0.7391
+      Recall: 0.9884
+      F1-Score: 0.8458
+      Support: 86
+    drone:
+      Precision: 1.0000
+      Recall: 0.6505
+      F1-Score: 0.7882
+      Support: 103
+    helicopter:
+      Precision: 0.9151
+      Recall: 0.9798
+      F1-Score: 0.9463
+      Support: 99
+
+  Failed predictions: 202
+

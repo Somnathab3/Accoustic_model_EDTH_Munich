@@ -1,12 +1,22 @@
 """
 State-of-the-art Deep CNN Models for Acoustic Drone Detection
-Implements three architectures: CRNN-Attention, PANNs-CNN14, and Audio Transformer
+Implements four architectures: CRNN-Attention, PANNs-CNN14, Audio Transformer, and SNN-based classifier
 """
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import Optional
 import math
+
+# Import snnTorch for spiking neural network support
+try:
+    import snntorch as snn
+    from snntorch import surrogate
+    SNN_AVAILABLE = True
+except ImportError:
+    snn = None
+    surrogate = None
+    SNN_AVAILABLE = False
 
 
 class TemporalFrequencyAttention(nn.Module):
@@ -417,6 +427,314 @@ class AudioTransformer(nn.Module):
         return logits
 
 
+class SpikingSelfAttention(nn.Module):
+    """
+    Spiking Neural Network block with self-attention dynamics
+    
+    Converts continuous inputs to spikes using LIF (Leaky Integrate-and-Fire) neurons.
+    Uses surrogate gradients for backpropagation through discrete spike events.
+    
+    Based on HPCNeuroNet architecture principles:
+        - Rate coding: accumulate spikes over timesteps
+        - Surrogate gradient (fast sigmoid) for training
+        - Learnable membrane dynamics
+    """
+    
+    def __init__(
+        self,
+        embed_dim: int,
+        timesteps: int = 4,
+        spike_slope: float = 25.0,
+        beta: float = 0.95,
+        learn_beta: bool = True
+    ):
+        super().__init__()
+        
+        if not SNN_AVAILABLE:
+            raise ImportError(
+                "snntorch is required for SNN models. "
+                "Install with: pip install snntorch"
+            )
+        
+        self.timesteps = timesteps
+        self.embed_dim = embed_dim
+        
+        # Projection layers
+        self.proj_in = nn.Linear(embed_dim, embed_dim)
+        self.proj_out = nn.Linear(embed_dim, embed_dim)
+        
+        # LIF neuron with surrogate gradient
+        # beta: membrane potential decay rate (0.9-0.99 typical)
+        # spike_grad: differentiable approximation of Heaviside step
+        self.lif = snn.Leaky(
+            beta=beta,
+            spike_grad=surrogate.fast_sigmoid(slope=spike_slope),
+            learn_beta=learn_beta,
+            init_hidden=True
+        )
+    
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Args:
+            x: (batch, num_tokens, embed_dim)
+        Returns:
+            Spike-processed features: (batch, num_tokens, embed_dim)
+        """
+        B, N, D = x.shape
+        
+        # Project input to current
+        current = self.proj_in(x)
+        
+        # Reset LIF state for this forward pass
+        # This prevents "backward through graph twice" error
+        self.lif.reset_mem()
+        
+        # Accumulate spikes over timesteps (rate coding)
+        spike_accumulator = torch.zeros_like(current)
+        
+        for t in range(self.timesteps):
+            # LIF dynamics: integrate current and generate spikes
+            # When init_hidden=True, mem is managed internally
+            spk = self.lif(current)
+            spike_accumulator = spike_accumulator + spk
+        
+        # Rate readout: average spike rate over time
+        spike_rate = spike_accumulator / float(self.timesteps)
+        
+        # Project back to embedding dimension
+        output = self.proj_out(spike_rate)
+        
+        return output
+
+
+class TimeToFirstSpikeEncoder(nn.Module):
+    """
+    Time-to-First-Spike (TTFS) encoding for SNN
+    
+    Encodes input magnitude as spike latency:
+        - High activation → early spike
+        - Low activation → late spike or no spike
+    
+    More biologically plausible than rate coding and can be faster.
+    """
+    
+    def __init__(
+        self,
+        embed_dim: int,
+        max_timesteps: int = 8,
+        spike_slope: float = 25.0
+    ):
+        super().__init__()
+        
+        if not SNN_AVAILABLE:
+            raise ImportError("snntorch required for TTFS encoding")
+        
+        self.max_timesteps = max_timesteps
+        self.embed_dim = embed_dim
+        
+        # Threshold for spike generation
+        self.threshold = nn.Parameter(torch.ones(1))
+        
+        # LIF with fixed beta for encoding
+        self.lif = snn.Leaky(
+            beta=0.8,
+            spike_grad=surrogate.fast_sigmoid(slope=spike_slope),
+            learn_beta=False,
+            init_hidden=True,
+            threshold=1.0
+        )
+    
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Args:
+            x: (batch, num_tokens, embed_dim)
+        Returns:
+            TTFS encoded spikes: (batch, num_tokens, embed_dim)
+        """
+        B, N, D = x.shape
+        
+        # Normalize input to [0, 1] range
+        x_norm = torch.sigmoid(x)
+        
+        # Reset LIF state
+        self.lif.reset_mem()
+        
+        # Initialize tracking variables
+        first_spike_time = torch.full((B, N, D), self.max_timesteps, device=x.device, dtype=torch.float32)
+        has_spiked = torch.zeros((B, N, D), device=x.device, dtype=torch.bool)
+        
+        # Generate spikes over timesteps
+        for t in range(self.max_timesteps):
+            # Strong input → charges membrane faster → spikes earlier
+            current = x_norm * (self.max_timesteps - t) / self.max_timesteps
+            
+            # Get spikes (mem handled internally with init_hidden=True)
+            spk = self.lif(current)
+            
+            # Record first spike time
+            newly_spiked = (spk > 0) & (~has_spiked)
+            first_spike_time[newly_spiked] = t
+            has_spiked = has_spiked | (spk > 0)
+        
+        # Convert spike time to continuous value (early spike → high value)
+        # Normalize to [0, 1] range
+        spike_encoding = 1.0 - (first_spike_time / self.max_timesteps)
+        
+        return spike_encoding
+
+
+class HPCNeuroNetLite(nn.Module):
+    """
+    SNN-based Audio Classifier (Transformer + Spiking Neural Network)
+    
+    Architecture inspired by HPCNeuroNet for neuromorphic audio processing:
+        1. Patch embedding of spectrogram
+        2. Transformer encoder layers (self-attention + MLP)
+        3. Spiking neural network block (LIF neurons with surrogate gradients)
+        4. Classification head
+    
+    Key Features:
+        - Converts audio features to spike trains
+        - Uses rate coding or TTFS encoding
+        - Surrogate gradients enable end-to-end backprop
+        - Lower power consumption potential for neuromorphic hardware
+    
+    Designed for:
+        - Edge deployment on neuromorphic chips (Intel Loihi, etc.)
+        - Power-efficient inference
+        - Biologically-inspired temporal processing
+    
+    Args:
+        num_classes: Number of output classes (default: 3)
+        input_channels: Input channels (1=mono, 3=total+harmonic+percussive)
+        patch_size: Size of spectrogram patches
+        embed_dim: Transformer embedding dimension
+        depth: Number of transformer layers
+        num_heads: Number of attention heads
+        mlp_ratio: MLP hidden dim ratio
+        dropout: Dropout rate
+        snn_timesteps: Number of SNN simulation timesteps
+        use_ttfs: Use time-to-first-spike encoding (else rate coding)
+    """
+    
+    def __init__(
+        self,
+        num_classes: int = 3,
+        input_channels: int = 3,
+        patch_size: int = 16,
+        embed_dim: int = 384,
+        depth: int = 6,
+        num_heads: int = 6,
+        mlp_ratio: float = 4.0,
+        dropout: float = 0.1,
+        snn_timesteps: int = 4,
+        use_ttfs: bool = False,
+        spike_slope: float = 25.0
+    ):
+        super().__init__()
+        
+        if not SNN_AVAILABLE:
+            raise ImportError(
+                "snntorch is required for HPCNeuroNetLite. "
+                "Install with: pip install snntorch"
+            )
+        
+        self.use_ttfs = use_ttfs
+        self.snn_timesteps = snn_timesteps
+        
+        # Patch embedding (same as AudioTransformer)
+        self.patch_embed = PatchEmbedding(input_channels, patch_size, embed_dim)
+        
+        # CLS token for classification
+        self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
+        
+        # Positional embedding (will be initialized in forward)
+        self.num_patches = 64  # Approximate, adjusted dynamically
+        self.pos_embed = nn.Parameter(torch.zeros(1, self.num_patches, embed_dim))
+        
+        # Transformer encoder blocks
+        self.blocks = nn.ModuleList([
+            TransformerEncoder(embed_dim, num_heads, mlp_ratio, dropout)
+            for _ in range(depth)
+        ])
+        
+        # Spiking neural network block
+        if use_ttfs:
+            self.spike_encoder = TimeToFirstSpikeEncoder(
+                embed_dim,
+                max_timesteps=snn_timesteps,
+                spike_slope=spike_slope
+            )
+        else:
+            self.spike_block = SpikingSelfAttention(
+                embed_dim,
+                timesteps=snn_timesteps,
+                spike_slope=spike_slope
+            )
+        
+        # Layer normalization
+        self.norm = nn.LayerNorm(embed_dim)
+        
+        # Classification head
+        self.head = nn.Linear(embed_dim, num_classes)
+        
+        # Initialize weights
+        nn.init.trunc_normal_(self.cls_token, std=0.02)
+        nn.init.trunc_normal_(self.pos_embed, std=0.02)
+    
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Args:
+            x: (batch, channels, n_mels, time)
+        Returns:
+            logits: (batch, num_classes)
+        """
+        batch_size = x.shape[0]
+        
+        # Patch embedding
+        x = self.patch_embed(x)  # (batch, num_patches, embed_dim)
+        num_patches = x.shape[1]
+        
+        # Interpolate positional embedding if needed
+        if num_patches != self.pos_embed.shape[1]:
+            pos_embed = F.interpolate(
+                self.pos_embed.transpose(1, 2),
+                size=num_patches,
+                mode='linear',
+                align_corners=False
+            ).transpose(1, 2)
+        else:
+            pos_embed = self.pos_embed
+        
+        # Add positional embedding
+        x = x + pos_embed
+        
+        # Prepend CLS token
+        cls_tokens = self.cls_token.expand(batch_size, -1, -1)
+        x = torch.cat([cls_tokens, x], dim=1)  # (batch, 1 + num_patches, embed_dim)
+        
+        # Transformer encoder blocks
+        for block in self.blocks:
+            x = block(x)
+        
+        # Spiking neural network processing
+        if self.use_ttfs:
+            x = self.spike_encoder(x)
+        else:
+            x = self.spike_block(x)
+        
+        # Normalization
+        x = self.norm(x)
+        
+        # Extract CLS token for classification
+        cls_output = x[:, 0]
+        
+        # Classification
+        logits = self.head(cls_output)
+        
+        return logits
+
+
 def create_model(
     model_type: str = 'crnn',
     num_classes: int = 3,
@@ -427,7 +745,7 @@ def create_model(
     Factory function to create models
     
     Args:
-        model_type: 'crnn', 'panns', or 'transformer'
+        model_type: 'crnn', 'panns', 'transformer', or 'snn'
         num_classes: Number of output classes
         input_channels: Number of input channels (1 or 3 with HPSS)
         **kwargs: Additional model-specific arguments (n_mels, dropout, etc.)
@@ -460,8 +778,20 @@ def create_model(
             input_channels=input_channels,
             **transformer_kwargs
         )
+    elif model_type == 'snn' or model_type == 'hpc_snn':
+        # SNN-based classifier (HPCNeuroNetLite)
+        # Filter out n_mels if present
+        snn_kwargs = {k: v for k, v in kwargs.items() if k != 'n_mels'}
+        return HPCNeuroNetLite(
+            num_classes=num_classes,
+            input_channels=input_channels,
+            **snn_kwargs
+        )
     else:
-        raise ValueError(f"Unknown model type: {model_type}. Choose 'crnn', 'panns', or 'transformer'")
+        raise ValueError(
+            f"Unknown model type: {model_type}. "
+            f"Choose 'crnn', 'panns', 'transformer', or 'snn'"
+        )
 
 
 if __name__ == '__main__':
@@ -490,4 +820,23 @@ if __name__ == '__main__':
     model_transformer = create_model('transformer', num_classes=3, input_channels=channels, depth=6)
     out = model_transformer(x)
     print(f"Output shape: {out.shape}")
-    print(f"Parameters: {sum(p.numel() for p in model_transformer.parameters()) / 1e6:.2f}M")
+    print(f"Parameters: {sum(p.numel() for p in model_transformer.parameters()) / 1e6:.2f}M\n")
+    
+    if SNN_AVAILABLE:
+        print("Testing SNN-based Classifier (HPCNeuroNetLite)...")
+        print("  → Rate coding variant...")
+        model_snn_rate = create_model('snn', num_classes=3, input_channels=channels, 
+                                      depth=4, snn_timesteps=4, use_ttfs=False)
+        out = model_snn_rate(x)
+        print(f"  Output shape: {out.shape}")
+        print(f"  Parameters: {sum(p.numel() for p in model_snn_rate.parameters()) / 1e6:.2f}M")
+        
+        print("  → TTFS encoding variant...")
+        model_snn_ttfs = create_model('snn', num_classes=3, input_channels=channels,
+                                      depth=4, snn_timesteps=8, use_ttfs=True)
+        out = model_snn_ttfs(x)
+        print(f"  Output shape: {out.shape}")
+        print(f"  Parameters: {sum(p.numel() for p in model_snn_ttfs.parameters()) / 1e6:.2f}M")
+    else:
+        print("⚠ SNN models not tested (snntorch not installed)")
+        print("  Install with: pip install snntorch")

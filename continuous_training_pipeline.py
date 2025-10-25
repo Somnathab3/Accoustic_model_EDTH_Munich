@@ -345,10 +345,11 @@ class ContinuousTrainingPipeline:
             
             # Setup training
             criterion = CombinedLoss(
-                num_classes=num_classes,
-                focal_alpha=0.25,
-                focal_gamma=2.0,
-                label_smoothing=0.1
+                use_focal=True,
+                use_label_smoothing=True,
+                class_weights=class_weights.to(device) if class_weights is not None else None,
+                smoothing=0.1,
+                focal_gamma=2.0
             )
             
             optimizer = torch.optim.AdamW(

@@ -63,17 +63,17 @@ class AudioPreprocessor(nn.Module):
         )
     
     def load_audio(self, path: str) -> torch.Tensor:
-        """Load and resample audio to target sample rate"""
-        waveform, sr = torchaudio.load(path)
+        """
+        Load and resample audio to target sample rate using librosa
         
-        # Convert to mono if stereo
-        if waveform.shape[0] > 1:
-            waveform = torch.mean(waveform, dim=0, keepdim=True)
+        Uses librosa by default for maximum compatibility across platforms.
+        No FFmpeg or TorchCodec required - works out of the box on Windows.
+        """
+        # Load audio with librosa (reliable, no FFmpeg needed)
+        y, sr = librosa.load(path, sr=self.sample_rate, mono=True)
         
-        # Resample if needed
-        if sr != self.sample_rate:
-            resampler = torchaudio.transforms.Resample(sr, self.sample_rate)
-            waveform = resampler(waveform)
+        # Convert to tensor and add channel dimension
+        waveform = torch.from_numpy(y).unsqueeze(0).float()
         
         return waveform
     
@@ -203,10 +203,11 @@ class BackgroundNoiseMixer(nn.Module):
             self._load_noise_samples()
     
     def _load_noise_samples(self):
-        """Preload noise samples for fast mixing"""
+        """Preload noise samples for fast mixing using librosa"""
         for path in self.noise_paths[:10]:  # Limit to avoid memory issues
             try:
-                waveform, _ = torchaudio.load(path)
+                y, sr = librosa.load(path, sr=16000, mono=True)
+                waveform = torch.from_numpy(y).unsqueeze(0).float()
                 self.noise_cache.append(waveform)
             except:
                 pass

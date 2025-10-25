@@ -14,3 +14,9 @@ python-dotenv>=1.0.1
 matplotlib>=3.7.0
 seaborn>=0.12.0
 requests>=2.31.0
+websockets>=12.0
+snntorch>=0.8.0  # Spiking Neural Network support for neuromorphic models
+
+# Audio processing fallback (when torchaudio has issues)
+# librosa already included above - it will be used as fallback
+# soundfile already included - needed by librosa for audio I/O

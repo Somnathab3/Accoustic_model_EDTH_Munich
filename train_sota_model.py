@@ -274,18 +274,28 @@ def main():
     
     # Data arguments
     parser.add_argument('--train-dir', type=str, required=True,
-                        help='Path to training data directory')
+                        help='Path to training data directory (e.g., data/combined_dataset/train)')
     parser.add_argument('--val-dir', type=str, required=True,
-                        help='Path to validation data directory')
+                        help='Path to validation data directory (e.g., data/combined_dataset/val)')
     parser.add_argument('--output-dir', type=str, default='models',
                         help='Output directory for models and logs')
     
     # Model arguments
     parser.add_argument('--model-type', type=str, default='panns',
-                        choices=['crnn', 'panns', 'transformer'],
+                        choices=['crnn', 'panns', 'transformer', 'snn', 'hpc_snn'],
                         help='Model architecture to use')
     parser.add_argument('--use-hpss', action='store_true', default=True,
                         help='Use HPSS for 3-channel input')
+    
+    # SNN-specific arguments
+    parser.add_argument('--snn-timesteps', type=int, default=4,
+                        help='Number of SNN simulation timesteps (2-8 typical)')
+    parser.add_argument('--use-ttfs', action='store_true',
+                        help='Use time-to-first-spike encoding (else rate coding)')
+    parser.add_argument('--spike-slope', type=float, default=25.0,
+                        help='Surrogate gradient slope for SNN (10-50)')
+    parser.add_argument('--snn-depth', type=int, default=None,
+                        help='Transformer depth for SNN (default: use model default)')
     
     # Training arguments
     parser.add_argument('--epochs', type=int, default=250,
@@ -293,7 +303,7 @@ def main():
     parser.add_argument('--batch-size', type=int, default=32,
                         help='Batch size')
     parser.add_argument('--lr', type=float, default=1e-4,
-                        help='Learning rate')
+                        help='Learning rate (use lower for SNN, e.g., 5e-5)')
     parser.add_argument('--weight-decay', type=float, default=0.01,
                         help='Weight decay')
     parser.add_argument('--warmup-ratio', type=float, default=0.1,
@@ -338,6 +348,18 @@ def main():
         args.max_samples = 50
         args.batch_size = 8
         print("\n⚡ QUICK TEST MODE ENABLED")
+    
+    # Auto-adjust hyperparameters for SNN if using defaults
+    if args.model_type in ['snn', 'hpc_snn']:
+        # Lower learning rate for SNN stability if using default
+        if args.lr == 1e-4:  # Default value
+            args.lr = 5e-5
+            print(f"\n📊 Auto-adjusted LR for SNN: {args.lr:.6f}")
+        
+        # Reduce batch size if memory constrained
+        if args.batch_size > 32:
+            args.batch_size = 16
+            print(f"📊 Auto-adjusted batch size for SNN: {args.batch_size}")
     
     # Set random seed
     torch.manual_seed(args.seed)
@@ -428,12 +450,35 @@ def main():
     # Create model
     print(f"\nCreating {args.model_type} model...")
     input_channels = 3 if args.use_hpss else 1
-    model = create_model(
-        model_type=args.model_type,
-        num_classes=3,
-        input_channels=input_channels,
-        n_mels=96
-    )
+    
+    # Build model kwargs
+    model_kwargs = {
+        'num_classes': 3,
+        'input_channels': input_channels,
+    }
+    
+    # Add n_mels for CRNN (other models don't need it)
+    if args.model_type == 'crnn':
+        model_kwargs['n_mels'] = 96
+    
+    # Add SNN-specific parameters
+    if args.model_type in ['snn', 'hpc_snn']:
+        model_kwargs['snn_timesteps'] = args.snn_timesteps
+        model_kwargs['use_ttfs'] = args.use_ttfs
+        model_kwargs['spike_slope'] = args.spike_slope
+        
+        # Set depth if specified
+        if args.snn_depth is not None:
+            model_kwargs['depth'] = args.snn_depth
+        
+        print(f"  SNN Configuration:")
+        print(f"    - Timesteps: {args.snn_timesteps}")
+        print(f"    - Encoding: {'TTFS' if args.use_ttfs else 'Rate Coding'}")
+        print(f"    - Spike slope: {args.spike_slope}")
+        if args.snn_depth:
+            print(f"    - Transformer depth: {args.snn_depth}")
+    
+    model = create_model(model_type=args.model_type, **model_kwargs)
     
     model = model.to(device)
     
