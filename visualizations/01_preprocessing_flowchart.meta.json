@@ -1,0 +1,35 @@
+{
+  "config": {
+    "sample_rate": 22050,
+    "duration": 3.0,
+    "n_samples": 66150,
+    "n_mels": 128,
+    "n_fft": 2048,
+    "hop_length": 512,
+    "n_mfcc": 40,
+    "fmin": 20,
+    "fmax": 8000
+  },
+  "output_shapes": {
+    "audio": [
+      66150
+    ],
+    "mel_spec": [
+      128,
+      130
+    ],
+    "mfcc": [
+      120,
+      130
+    ],
+    "spectral": [
+      9,
+      130
+    ],
+    "combined": [
+      3,
+      128,
+      130
+    ]
+  }
+}

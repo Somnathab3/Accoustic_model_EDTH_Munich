@@ -155,3 +155,25 @@ iteration,timestamp,challenge_id,predicted,actual,correct_inferred,confidence,sc
 1,2025-10-25 23:07:21,6e321ce9-d41b-49c0-8432-78ae95d9d2e7,helicopter,unknown,True,0.9070,100,100,True,Correct!,2.3196,71.9353
 1,2025-10-25 23:15:42,3430e677-80e9-4392-a166-4bc606721a93,drone,unknown,True,0.9191,100,200,True,Correct!,2.4393,79.6965
 1,2025-10-25 23:19:01,01b68506-cec7-4670-981d-0496d5608e51,background,unknown,True,0.5666,100,300,True,Correct!,9.4905,63.3981
+2,2025-10-25 23:20:42,983b13e3-8ef5-4a79-b5f0-cd721ff910bd,helicopter,unknown,False,0.4296,0,300,True,Incorrect,0.0679,100.0208
+3,2025-10-25 23:22:23,ed37203b-f3b9-4849-a773-fdc43c0a2038,background,unknown,False,0.5139,0,0,False,timeout,0.0946,101.1961
+4,2025-10-25 23:24:01,4b4f0077-b4c7-48bb-83d1-7baf64d49749,drone,unknown,True,0.9762,139,616,True,Correct!,0.0974,98.7418
+5,2025-10-25 23:25:42,641e6d10-685f-46bf-a93a-d10994155b51,drone,unknown,True,0.9750,126,742,True,Correct!,0.0659,99.4475
+6,2025-10-25 23:27:22,cf2c039d-ade2-49f0-9af2-19cf39b01a2a,background,unknown,False,0.6840,0,742,True,Incorrect,0.0601,99.7672
+7,2025-10-25 23:29:01,49e7830c-2647-4ecb-bc94-f9b52836317d,background,unknown,True,0.6382,100,842,True,Correct!,0.0629,99.9692
+1,2025-10-25 23:30:45,4d31ba52-d39f-452d-8fe1-79efb504297f,helicopter,unknown,False,0.7891,0,0,False,Invalid or expired challenge ID,3.7012,40.6372
+2,2025-10-25 23:32:21,67d2ad3c-9f7b-4319-a758-4e0428afbcf6,background,unknown,True,0.8457,116,1058,True,Correct!,0.0960,96.2066
+3,2025-10-25 23:34:01,65a51009-54fa-4db0-81c4-bb1b1833371e,helicopter,unknown,True,0.7729,171,1229,True,Correct!,0.0908,99.7243
+4,2025-10-25 23:35:42,8c7a4584-98a0-4979-9be1-5502db7ae3ea,helicopter,unknown,True,0.8377,100,1329,True,Correct!,0.0841,99.9607
+5,2025-10-25 23:37:22,c1791cfc-49b7-47b8-bb3d-a3f5782c0c46,helicopter,unknown,True,0.6756,101,1430,True,Correct!,0.0752,81.0394
+6,2025-10-25 23:39:02,bfed446c-2c70-4890-8519-d5fb341d6485,background,unknown,True,0.7649,170,1600,True,Correct!,0.0631,99.9556
+7,2025-10-25 23:40:42,b81f44b4-9f6c-4f79-8a6f-2c167930d557,helicopter,unknown,True,0.9085,164,1764,True,Correct!,0.0663,100.0724
+8,2025-10-25 23:42:22,fd1b75c1-2441-47d3-b8e5-9bba42d576e6,drone,unknown,True,0.9407,143,1907,True,Correct!,0.0672,99.6151
+9,2025-10-25 23:44:02,d8296627-a105-43f5-b872-408d381ff765,drone,unknown,True,0.7202,165,2072,True,Correct!,0.0659,100.0475
+10,2025-10-25 23:45:42,0815cc35-b824-4135-b8c5-c6502f2141ce,drone,unknown,False,0.5107,0,2072,True,Incorrect,0.0673,100.3813
+11,2025-10-25 23:47:22,cf99c932-0885-4b99-af5e-27dc4e220e5d,drone,unknown,False,0.4218,0,2072,True,Incorrect,0.0613,99.5091
+12,2025-10-25 23:49:02,6d0da17c-786b-424a-9df3-4bd20d0c4df6,drone,unknown,True,0.6661,174,2246,True,Correct!,0.0956,100.4283
+13,2025-10-25 23:50:42,ef83b3f4-6826-4d30-ab8c-c3e5adbb0073,background,unknown,True,0.6856,157,2403,True,Correct!,0.0967,99.4114
+1,2025-10-26 00:00:42,e361f214-1b48-4402-ad6e-287844c23e74,helicopter,unknown,True,0.8961,104,2648,True,Correct!,2.7312,89.8140
+2,2025-10-26 00:02:22,ab4300c0-4e4f-4389-b9f4-8afcb9efd7de,helicopter,unknown,True,0.7879,143,2791,True,Correct!,0.1016,99.9675
+1,2025-10-26 00:09:02,09e2dea9-783b-4a98-ada4-08616d107452,helicopter,unknown,True,0.7828,100,3065,True,Correct!,2.4697,16.3828
