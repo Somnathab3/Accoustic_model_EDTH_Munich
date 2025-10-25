@@ -128,3 +128,30 @@ iteration,timestamp,challenge_id,predicted,actual,correct_inferred,confidence,sc
 11,2025-10-25 20:43:28,1e8df985-9e9b-4178-9c09-2be65f954f95,drone,unknown,False,0.9911,0,0,False,timeout,0.0716,100.1782
 12,2025-10-25 20:45:08,e918c1ca-a0ab-4baf-8c06-571295918d6e,helicopter,unknown,True,0.8670,186,106148,True,Correct!,0.0734,99.8105
 13,2025-10-25 20:46:48,45657427-601e-4e64-9c30-30f87a727ace,background,unknown,True,0.6740,195,106343,True,Correct!,0.0605,99.9916
+14,2025-10-25 20:48:28,ab88c565-ab63-4ad4-b030-78359735ff03,helicopter,unknown,True,0.9253,195,106538,True,Correct!,0.0912,99.9825
+15,2025-10-25 20:50:08,a9cba729-448f-448e-9302-acaa68057cd7,helicopter,unknown,True,0.9437,195,106733,True,Correct!,0.1043,99.9818
+16,2025-10-25 20:51:48,9c3da7d7-a89c-45d6-b2a6-31e36fc62732,background,unknown,True,0.8190,195,106928,True,Correct!,0.0773,99.9890
+17,2025-10-25 20:53:28,7303e439-3132-4322-8980-c102027e600f,helicopter,unknown,False,0.8999,0,106928,True,Incorrect,0.1014,99.9923
+18,2025-10-25 20:55:08,43cebc42-f743-4169-b667-96c3d7ef5950,background,unknown,True,0.9428,194,107122,True,Correct!,0.1006,99.9805
+19,2025-10-25 20:56:48,22ddabe6-d15c-4b3e-af6b-a86b587fab50,background,unknown,True,0.7694,195,107317,True,Correct!,0.1017,99.9908
+20,2025-10-25 20:58:28,20b6d6ed-20fc-4722-aa05-f5ecc4c0bc95,helicopter,unknown,True,0.8643,195,107512,True,Correct!,0.1024,100.0270
+1,2025-10-25 22:35:08,1181f039-676f-4342-af8b-49df4b1c319f,background,unknown,False,0.7787,0,0,False,Invalid or expired challenge ID,68.8022,70.6123
+2,2025-10-25 22:35:10,4280f8b4-7197-40b5-9cfb-4b2512c222b4,drone,unknown,False,0.5446,0,0,False,You have already submitted for this challenge,0.0586,2.8954
+3,2025-10-25 22:35:44,db0fcfed-af16-4d6d-9cd3-968e84a65a86,background,unknown,False,0.4654,0,0,False,You have already submitted for this challenge,0.0608,2.6413
+4,2025-10-25 22:37:25,4fe57161-5eb3-477a-a31c-bfd6bba504bd,helicopter,unknown,False,0.8629,0,0,False,You have already submitted for this challenge,0.0574,3.6560
+5,2025-10-25 22:40:36,3e2c4991-ac20-45db-a495-8a9bdae40c61,background,unknown,False,0.6039,0,0,False,You have already submitted for this challenge,0.0543,94.2028
+6,2025-10-25 22:42:28,40ab58bd-a874-4260-a182-b180496ac39c,drone,unknown,False,0.6527,0,0,False,You have already submitted for this challenge,0.0551,1.1102
+1,2025-10-25 22:45:21,d608db20-a161-4f8e-9623-b34b3c767958,background,unknown,False,0.5868,0,0,False,You have already submitted for this challenge,10.9049,13.3038
+2,2025-10-25 22:45:45,1c8004ae-f1bc-4451-be9a-982546aaffa2,background,unknown,False,0.7773,0,0,False,You have already submitted for this challenge,0.0910,3.7994
+3,2025-10-25 22:47:23,ab95b0e0-9446-40bc-bfe1-f0a5fbd6ee52,helicopter,unknown,False,0.7747,0,0,False,You have already submitted for this challenge,0.0714,1.4520
+4,2025-10-25 22:49:04,3a479d68-84e8-44f3-aa7f-447f9016755b,background,unknown,False,0.4881,0,0,False,You have already submitted for this challenge,0.0949,1.8392
+1,2025-10-25 22:53:02,551dc608-2087-4c19-842d-48776302307f,background,not_provided,,0.6342,0,0,False,You have already submitted for this challenge,2.3980,3.4616
+2,2025-10-25 22:54:03,f924e00d-16a6-4c67-8570-d818ce662385,background,not_provided,,0.5212,0,0,False,You have already submitted for this challenge,0.1006,1.6262
+1,2025-10-25 22:59:49,3d310fa0-9cca-4092-88f7-d3c31f201e4f,helicopter,unknown,False,0.8618,0,0,False,You have already submitted for this challenge,2.2866,5.6312
+2,2025-10-25 23:00:43,9572b858-2b1d-4ce6-b7db-f14728e585ca,background,unknown,False,0.5825,0,0,False,You have already submitted for this challenge,0.0911,1.1821
+3,2025-10-25 23:02:22,1f003ef3-dda0-4fef-a8b5-fca5f9c89a96,background,unknown,False,0.7777,0,0,False,You have already submitted for this challenge,0.0908,0.9195
+1,2025-10-25 23:03:16,1f003ef3-dda0-4fef-a8b5-fca5f9c89a96,background,unknown,False,0.7646,0,0,False,You have already submitted for this challenge,2.2617,3.6483
+2,2025-10-25 23:04:03,9cc22158-b6df-4e87-bf95-15e99adc658d,background,unknown,False,0.4915,0,0,False,You have already submitted for this challenge,0.0913,1.5361
+1,2025-10-25 23:07:21,6e321ce9-d41b-49c0-8432-78ae95d9d2e7,helicopter,unknown,True,0.9070,100,100,True,Correct!,2.3196,71.9353
+1,2025-10-25 23:15:42,3430e677-80e9-4392-a166-4bc606721a93,drone,unknown,True,0.9191,100,200,True,Correct!,2.4393,79.6965
+1,2025-10-25 23:19:01,01b68506-cec7-4670-981d-0496d5608e51,background,unknown,True,0.5666,100,300,True,Correct!,9.4905,63.3981

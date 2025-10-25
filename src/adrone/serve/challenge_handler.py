@@ -5,11 +5,16 @@ Handles API submissions, audio storage, and performance tracking
 import json
 import time
 import shutil
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional, List
 import requests
 import numpy as np
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 
 class ChallengeResultStorage:
@@ -204,9 +209,28 @@ class ChallengeAPIClient:
     
     def __init__(
         self,
-        api_base_url: str = "https://edth.helsing.codes",
-        api_token: str = "9726345a-34ed-4995-94d9-ecc239b47c1d"
+        api_base_url: str = None,
+        api_token: str = None
     ):
+        """
+        Initialize API client
+        
+        Args:
+            api_base_url: API base URL (defaults to env var or https://edth.helsing.codes)
+            api_token: API token (defaults to env var)
+        """
+        # Load from environment variables if not provided
+        if api_base_url is None:
+            api_base_url = os.getenv('API_BASE_URL', 'https://edth.helsing.codes')
+        
+        if api_token is None:
+            api_token = os.getenv('API_TOKEN')
+            if api_token is None:
+                raise ValueError(
+                    "API_TOKEN not found! Please set it in .env file.\n"
+                    "Create a .env file with: API_TOKEN=your_token_here"
+                )
+        
         self.api_base_url = api_base_url
         self.api_token = api_token
         self.session = requests.Session()

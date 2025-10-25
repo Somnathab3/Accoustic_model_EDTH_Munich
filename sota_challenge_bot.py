@@ -5,6 +5,10 @@ Uses state-of-the-art model with optimized inference pipeline
 import sys
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
@@ -44,8 +48,8 @@ class CleanChallengeBot:
         labels_path: str,
         csv_path: str = "challenge_results/results.csv",
         storage_dir: str = "challenge_results",
-        api_base_url: str = "https://edth.helsing.codes",
-        api_token: str = "9726345a-34ed-4995-94d9-ecc239b47c1d"
+        api_base_url: str = None,
+        api_token: str = None
     ):
         """
         Initialize challenge bot
@@ -55,12 +59,27 @@ class CleanChallengeBot:
             labels_path: Path to labels JSON
             csv_path: Path to CSV file for storing results
             storage_dir: Directory to store results
-            api_base_url: Challenge API base URL
-            api_token: API authentication token
+            api_base_url: Challenge API base URL (defaults to env var or https://edth.helsing.codes)
+            api_token: API authentication token (defaults to env var)
         """
         print("Initializing Clean Challenge Bot...")
         print(f"Model: {model_path}")
         print(f"Labels: {labels_path}")
+        
+        # Load API configuration from environment variables if not provided
+        if api_base_url is None:
+            api_base_url = os.getenv('API_BASE_URL', 'https://edth.helsing.codes')
+        
+        if api_token is None:
+            api_token = os.getenv('API_TOKEN')
+            if api_token is None:
+                raise ValueError(
+                    "API_TOKEN not found! Please set it in .env file or pass as argument.\n"
+                    "Create a .env file with: API_TOKEN=your_token_here"
+                )
+        
+        print(f"API URL: {api_base_url}")
+        print(f"API Token: {api_token[:8]}...{api_token[-4:]} (masked)")
         
         # Store API base URL for constructing full URLs
         self.api_base_url = api_base_url
@@ -567,10 +586,10 @@ def main():
                         help='Path to CSV file for results')
     parser.add_argument('--storage-dir', type=str, default='challenge_results',
                         help='Directory to store results')
-    parser.add_argument('--api-url', type=str, default='https://edth.helsing.codes',
-                        help='Challenge API base URL')
-    parser.add_argument('--api-token', type=str, default='9726345a-34ed-4995-94d9-ecc239b47c1d',
-                        help='API authentication token')
+    parser.add_argument('--api-url', type=str, default=None,
+                        help='Challenge API base URL (default: from .env or https://edth.helsing.codes)')
+    parser.add_argument('--api-token', type=str, default=None,
+                        help='API authentication token (default: loaded from .env file)')
     parser.add_argument('--max-iterations', type=int, default=None,
                         help='Maximum number of iterations (default: infinite)')
     parser.add_argument('--delay', type=float, default=0.5,
