@@ -1,11 +1,16 @@
 # SNN-based Acoustic Drone Classifier Configuration
-# HPCNeuroNetLite: Transformer + Spiking Neural Network
+# IMPROVED: Hybrid architecture to fix drone recall (was 0.214)
+# Key fixes: Conv front-end + SNN, increased timesteps, KD from CRNN
 
 # Model Architecture
 model:
   type: 'snn'  # or 'hpc_snn'
   num_classes: 3  # drone, helicopter, background
   input_channels: 3  # total, harmonic, percussive (HPSS)
+  
+  # Hybrid architecture (Conv + SNN for stability)
+  use_hybrid: true  # Conv front-end before spiking layers
+  conv_blocks: 2  # Number of non-spiking conv blocks at start
   
   # Transformer settings
   patch_size: 16
@@ -15,10 +20,18 @@ model:
   mlp_ratio: 4.0
   dropout: 0.1
   
-  # SNN-specific settings
-  snn_timesteps: 4  # Number of spike simulation steps (2-8 typical)
-  use_ttfs: false  # false=rate coding, true=time-to-first-spike
-  spike_slope: 25.0  # Surrogate gradient slope (10-50)
+  # SNN-specific settings (IMPROVED)
+  snn_timesteps: 10  # Increased from 4 to 8-12 for better encoding
+  use_ttfs: false  # false=rate coding (more stable), true=time-to-first-spike
+  spike_slope: 35.0  # Surrogate gradient slope (25-50, increased for stability)
+  
+  # LIF neuron parameters
+  lif_beta: 0.96  # Membrane decay (0.95-0.98)
+  lif_threshold: 1.0
+  
+  # Spike rate regularization
+  spike_rate_penalty: 0.001  # Penalty to keep mean firing in [0.05, 0.2]
+  target_spike_rate: 0.1
 
 # Audio Preprocessing
 audio:
@@ -43,7 +56,7 @@ audio:
   hpss_power: 2.0
   hpss_margin: 1.0
 
-# Data Augmentation
+# Data Augmentation (Enhanced for rotor harmonics)
 augmentation:
   spec_augment: true
   time_mask_param: 30
@@ -54,40 +67,62 @@ augmentation:
   # Audio augmentations
   noise_injection: true
   noise_level: 0.005
+  snr_curriculum: true
+  snr_range: [0, 15]
+  
   time_shift: true
   time_shift_max: 0.2  # 20% of audio length
+  
+  # RPM variations (±3-5% pitch)
+  pitch_shift: true
+  pitch_range: [-5.0, 5.0]
+  
+  # Microphone simulation
+  narrowband_notch: true
+  band_limiting: true
   
   mixup: true
   mixup_alpha: 0.4
 
-# Training
+# Training (IMPROVED for SNN stability)
 training:
   epochs: 50
-  batch_size: 32  # Reduce if OOM (SNN can be memory-intensive)
+  batch_size: 16  # Reduce for SNN memory (was 32)
   
-  # Optimizer
+  # Optimizer (higher LR for SNN)
   optimizer: 'adamw'
-  lr: 0.0001  # Start lower for SNN stability
+  lr: 0.002  # Increased from 0.0001 for faster SNN convergence
   weight_decay: 0.01
   betas: [0.9, 0.999]
   
   # Learning rate schedule
   scheduler: 'cosine'
   warmup_epochs: 5
-  min_lr: 0.000001
+  min_lr: 0.00005  # Higher min_lr for SNN
   
-  # Loss
-  loss: 'cross_entropy'
-  label_smoothing: 0.1
-  class_weights: null  # Auto-compute from data or [1.0, 1.0, 1.0]
+  # Loss - FOCAL LOSS for drone class
+  loss_type: 'focal'  # Was 'cross_entropy'
+  focal_gamma: 2.0
+  label_smoothing: 0.05
+  use_class_weights: true
+  
+  # Balanced sampling (CRITICAL for drone recall)
+  balanced_sampling: true
   
   # Regularization
   gradient_clip: 1.0
-  mixed_precision: true  # Keep LIF state in fp32 internally
+  mixed_precision: false  # Keep LIF state in fp32 (was true)
   
   # Early stopping
-  patience: 10
+  patience: 15  # Increased patience for SNN
   min_delta: 0.001
+
+# Knowledge Distillation (CRITICAL for SNN on small data)
+knowledge_distillation:
+  enabled: true
+  teacher_model: 'models/crnn_combined/crnn_final.pt'  # Best CRNN
+  temperature: 3.0  # 2-4 for SNN
+  alpha: 0.5  # Equal weight to hard + soft targets
 
 # Validation
 validation:
@@ -95,6 +130,7 @@ validation:
   eval_every: 1  # epochs
   save_best: true
   metric: 'f1_macro'  # or 'accuracy', 'loss'
+  save_best_drone_recall: true  # Also save best drone recall checkpoint
 
 # Hardware
 device: 'cuda'  # or 'cpu'
@@ -103,9 +139,9 @@ pin_memory: true
 
 # Logging
 logging:
-  log_dir: './logs/snn'
-  save_dir: './models/snn'
-  experiment_name: 'hpc_neuronet_lite'
+  log_dir: './logs/snn_improved'
+  save_dir: './models/snn_improved'
+  experiment_name: 'hybrid_snn_focal_kd'
   log_every: 10  # batches
   
   # Metrics to track
@@ -116,14 +152,15 @@ logging:
     - 'f1_macro'
     - 'confusion_matrix'
     - 'per_class_f1'
+    - 'per_class_recall'  # Monitor drone recall
     - 'spike_rate'  # Average spike rate (SNN-specific)
     - 'energy_estimate'  # Spike-based energy estimate
 
 # Dataset
 data:
-  train_path: './data/edth_prepared/train'
-  val_path: './data/edth_prepared/val'
-  test_path: './data/edth_prepared/test'
+  train_path: './data/combined_dataset/train'
+  val_path: './data/combined_dataset/val'
+  test_path: './data/combined_dataset/test'
   
   # Class mapping
   classes:
@@ -137,3 +174,17 @@ deployment:
   max_latency_ms: 100  # Target latency per 1s audio
   quantize: false  # Quantize weights for edge deployment
   export_format: 'torchscript'  # or 'onnx'
+
+# Expected improvements
+# Current SNN: Val F1 ≈ 0.598, drone recall ≈ 0.214 (WORST)
+# Target: Val F1 > 0.85, drone recall > 0.75
+# Key fixes:
+#   1. Hybrid architecture (conv front-end + SNN)
+#   2. Increased timesteps (4 → 10)
+#   3. Rate coding (more stable than TTFS)
+#   4. Higher LR (0.0001 → 0.002)
+#   5. Focal loss (γ=2) for drone
+#   6. KD from CRNN (critical for SNN)
+#   7. Balanced sampling
+#   8. Spike rate penalty for stability
+#   9. 3-channel HPSS (harmonics help SNN)

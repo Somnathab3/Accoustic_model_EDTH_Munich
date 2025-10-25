@@ -1,6 +1,6 @@
 """
-State-of-the-Art Training Script for Acoustic Drone Detection
-Implements full methodology with curriculum learning, augmentation, and best practices
+Improved Training Script for PANNS, Transformer, and SNN
+Incorporates: Focal Loss, Knowledge Distillation, Balanced Sampling, Progressive Unfreezing
 """
 import torch
 import torch.nn as nn
@@ -10,9 +10,8 @@ import argparse
 import json
 from datetime import datetime
 from tqdm import tqdm
-
-# Import our modules
 import sys
+
 sys.path.insert(0, str(Path(__file__).parent))
 
 from src.adrone.preprocessing import AudioPreprocessor, AugmentationPipeline
@@ -20,6 +19,8 @@ from src.adrone.data.acoustic_dataset import create_dataloaders
 from src.adrone.models.acoustic_models import create_model
 from src.adrone.training import (
     CombinedLoss,
+    DistillationLoss,
+    ClassBalancedLoss,
     cosine_schedule_with_warmup,
     EarlyStopping,
     MetricsTracker
@@ -27,17 +28,53 @@ from src.adrone.training import (
 from src.adrone.evaluation import evaluate_model, print_evaluation_report
 
 
-def train_epoch(
+def load_teacher_model(teacher_path: str, device: torch.device):
+    """Load CRNN teacher model for knowledge distillation"""
+    print(f"\n📚 Loading teacher model from {teacher_path}")
+    
+    checkpoint = torch.load(teacher_path, map_location=device, weights_only=False)
+    
+    # Get model config
+    model_type = checkpoint.get('model_type', 'crnn')
+    input_channels = checkpoint.get('input_channels', 3)
+    num_classes = checkpoint.get('num_classes', 3)
+    n_mels = checkpoint.get('n_mels', 96)
+    
+    # Create teacher model
+    model_kwargs = {
+        'num_classes': num_classes,
+        'input_channels': input_channels,
+    }
+    if model_type == 'crnn':
+        model_kwargs['n_mels'] = n_mels
+    
+    teacher_model = create_model(model_type=model_type, **model_kwargs)
+    teacher_model.load_state_dict(checkpoint['model_state_dict'])
+    teacher_model = teacher_model.to(device)
+    teacher_model.eval()
+    
+    print(f"✓ Teacher model loaded: {model_type.upper()}")
+    print(f"  Best F1: {checkpoint.get('best_macro_f1', 'N/A')}")
+    
+    return teacher_model
+
+
+def train_epoch_with_kd(
     model: nn.Module,
+    teacher_model: nn.Module,
     dataloader: DataLoader,
     criterion: nn.Module,
+    kd_criterion: nn.Module,
     optimizer: torch.optim.Optimizer,
     device: torch.device,
     epoch: int,
-    max_epochs: int
+    max_epochs: int,
+    use_kd: bool = True
 ) -> tuple:
-    """Train for one epoch"""
+    """Train for one epoch with knowledge distillation"""
     model.train()
+    if teacher_model is not None:
+        teacher_model.eval()
     
     total_loss = 0.0
     correct = 0
@@ -51,15 +88,25 @@ def train_epoch(
         
         # Forward pass
         optimizer.zero_grad()
-        logits = model(spectrograms)
+        student_logits = model(spectrograms)
         
         # Compute loss
-        loss = criterion(logits, labels)
+        if use_kd and teacher_model is not None:
+            # Knowledge distillation
+            with torch.no_grad():
+                teacher_logits = teacher_model(spectrograms)
+            
+            # Hard labels for KD
+            hard_labels = labels.argmax(dim=1) if labels.dim() > 1 else labels
+            loss = kd_criterion(student_logits, teacher_logits, hard_labels)
+        else:
+            # Standard loss
+            loss = criterion(student_logits, labels)
         
         # Backward pass
         loss.backward()
         
-        # Gradient clipping for stability
+        # Gradient clipping
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         
         optimizer.step()
@@ -67,11 +114,11 @@ def train_epoch(
         # Track metrics
         total_loss += loss.item()
         
-        # Handle soft labels (from mixup)
+        # Handle soft labels
         if labels.dim() > 1:
             labels = labels.argmax(dim=1)
         
-        predictions = logits.argmax(dim=1)
+        predictions = student_logits.argmax(dim=1)
         correct += (predictions == labels).sum().item()
         total += labels.size(0)
         
@@ -126,7 +173,6 @@ def validate(
             all_predictions.append(predictions.cpu())
             all_targets.append(labels.cpu())
             
-            # Update progress bar
             pbar.set_postfix({
                 'loss': f'{loss.item():.4f}',
                 'acc': f'{correct/total:.4f}'
@@ -135,33 +181,60 @@ def validate(
     avg_loss = total_loss / len(dataloader)
     accuracy = correct / total
     
-    # Compute macro F1
-    from sklearn.metrics import f1_score
+    # Compute per-class metrics
+    from sklearn.metrics import f1_score, recall_score, precision_score
     all_predictions = torch.cat(all_predictions).numpy()
     all_targets = torch.cat(all_targets).numpy()
-    macro_f1 = f1_score(all_targets, all_predictions, average='macro', zero_division=0)
     
-    return avg_loss, accuracy, macro_f1
+    macro_f1 = f1_score(all_targets, all_predictions, average='macro', zero_division=0)
+    per_class_recall = recall_score(all_targets, all_predictions, average=None, zero_division=0)
+    per_class_f1 = f1_score(all_targets, all_predictions, average=None, zero_division=0)
+    
+    return avg_loss, accuracy, macro_f1, per_class_recall, per_class_f1
 
 
 def train(
     model: nn.Module,
+    teacher_model: nn.Module,
     train_loader: DataLoader,
     val_loader: DataLoader,
     class_weights: torch.Tensor,
+    samples_per_class: torch.Tensor,
     args,
     device: torch.device
 ):
-    """Main training loop"""
+    """Main training loop with KD and all improvements"""
     
     # Loss function
-    criterion = CombinedLoss(
-        use_focal=args.use_focal_loss,
-        use_label_smoothing=True,
-        class_weights=class_weights.to(device) if args.use_class_weights else None,
-        smoothing=args.label_smoothing,
-        focal_gamma=args.focal_gamma
-    )
+    if args.use_class_balanced:
+        criterion = CombinedLoss(
+            use_class_balanced=True,
+            samples_per_class=samples_per_class.to(device),
+            num_classes=3,
+            smoothing=args.label_smoothing
+        )
+    elif args.use_focal_loss:
+        criterion = CombinedLoss(
+            use_focal=True,
+            class_weights=class_weights.to(device) if args.use_class_weights else None,
+            focal_gamma=args.focal_gamma
+        )
+    else:
+        criterion = CombinedLoss(
+            use_label_smoothing=True,
+            class_weights=class_weights.to(device) if args.use_class_weights else None,
+            smoothing=args.label_smoothing
+        )
+    
+    # Knowledge distillation loss
+    kd_criterion = None
+    if args.use_kd and teacher_model is not None:
+        kd_criterion = DistillationLoss(
+            temperature=args.kd_temperature,
+            alpha=args.kd_alpha,
+            base_criterion=criterion
+        )
+        print(f"\n✓ Knowledge Distillation enabled (T={args.kd_temperature}, α={args.kd_alpha})")
     
     # Optimizer
     optimizer = torch.optim.AdamW(
@@ -185,7 +258,7 @@ def train(
     # Early stopping
     early_stopping = EarlyStopping(
         patience=args.patience,
-        mode='max'  # Maximize macro F1
+        mode='max'
     )
     
     # Metrics tracker
@@ -193,26 +266,30 @@ def train(
     
     # Training loop
     best_macro_f1 = 0.0
+    best_drone_recall = 0.0
     best_epoch = 0
     
-    print(f"\nTraining {args.model_type} for {args.epochs} epochs")
+    print(f"\n{'='*70}")
+    print(f"Training {args.model_type.upper()} with Improvements")
+    print(f"{'='*70}")
     print(f"Device: {device}")
     print(f"Batch size: {args.batch_size}")
     print(f"Learning rate: {args.lr}")
-    print(f"Warmup steps: {num_warmup_steps}")
-    print(f"Total steps: {num_training_steps}\n")
+    print(f"Loss type: {'Focal' if args.use_focal_loss else 'Class-Balanced' if args.use_class_balanced else 'CE+LabelSmoothing'}")
+    print(f"Balanced sampling: {args.balanced_sampling}")
+    print(f"Knowledge distillation: {args.use_kd}")
+    print(f"{'='*70}\n")
     
     for epoch in range(args.epochs):
         # Train
-        train_loss, train_acc = train_epoch(
-            model, train_loader, criterion, optimizer,
-            device, epoch, args.epochs
+        train_loss, train_acc = train_epoch_with_kd(
+            model, teacher_model, train_loader, criterion, kd_criterion,
+            optimizer, device, epoch, args.epochs, use_kd=args.use_kd
         )
         
         # Validate
-        val_loss, val_acc, val_macro_f1 = validate(
-            model, val_loader, criterion,
-            device, epoch, args.epochs
+        val_loss, val_acc, val_macro_f1, per_class_recall, per_class_f1 = validate(
+            model, val_loader, criterion, device, epoch, args.epochs
         )
         
         # Update learning rate
@@ -229,100 +306,141 @@ def train(
             lr=current_lr
         )
         
+        # Class names
+        class_names = ['background', 'drone', 'helicopter']
+        drone_recall = per_class_recall[1]  # Drone is class 1
+        
         # Print epoch summary
         print(f"\nEpoch {epoch+1}/{args.epochs}:")
         print(f"  Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.4f}")
         print(f"  Val Loss:   {val_loss:.4f} | Val Acc:   {val_acc:.4f}")
         print(f"  Val Macro F1: {val_macro_f1:.4f}")
+        print(f"  Per-class Recall: {dict(zip(class_names, per_class_recall))}")
+        print(f"  ⚠️  DRONE RECALL: {drone_recall:.4f}")
         print(f"  LR: {current_lr:.6f}")
         
-        # Save best model
+        # Save best model (by macro F1)
         if val_macro_f1 > best_macro_f1:
             best_macro_f1 = val_macro_f1
             best_epoch = epoch
             
-            # Save checkpoint
             checkpoint = {
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
                 'val_macro_f1': val_macro_f1,
                 'val_acc': val_acc,
+                'per_class_recall': per_class_recall.tolist(),
+                'per_class_f1': per_class_f1.tolist(),
                 'args': vars(args)
             }
             
             torch.save(checkpoint, args.output_dir / 'best_model.pt')
             print(f"  ✓ Saved best model (Macro F1: {val_macro_f1:.4f})")
         
+        # Save best drone recall model
+        if drone_recall > best_drone_recall:
+            best_drone_recall = drone_recall
+            
+            checkpoint = {
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'val_macro_f1': val_macro_f1,
+                'drone_recall': drone_recall,
+                'per_class_recall': per_class_recall.tolist()
+            }
+            
+            torch.save(checkpoint, args.output_dir / 'best_drone_recall.pt')
+            print(f"  ✓ Saved best drone recall model (Recall: {drone_recall:.4f})")
+        
         # Early stopping check
         if early_stopping(val_macro_f1):
             print(f"\nEarly stopping triggered after {epoch+1} epochs")
             break
     
-    print(f"\nTraining completed!")
+    print(f"\n{'='*70}")
+    print(f"Training Complete!")
+    print(f"{'='*70}")
     print(f"Best Macro F1: {best_macro_f1:.4f} at epoch {best_epoch+1}")
+    print(f"Best Drone Recall: {best_drone_recall:.4f}")
+    print(f"{'='*70}\n")
     
     # Save final metrics
     metrics_tracker.save(args.output_dir / 'training_history.json')
     metrics_tracker.plot(args.output_dir / 'training_curves.png')
     
-    return best_epoch, best_macro_f1
+    return best_epoch, best_macro_f1, best_drone_recall
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Train acoustic drone detection model')
+    parser = argparse.ArgumentParser(description='Train improved acoustic drone detection models')
     
     # Data arguments
     parser.add_argument('--train-dir', type=str, required=True,
-                        help='Path to training data directory (e.g., data/combined_dataset/train)')
+                        help='Path to training data directory')
     parser.add_argument('--val-dir', type=str, required=True,
-                        help='Path to validation data directory (e.g., data/combined_dataset/val)')
+                        help='Path to validation data directory')
     parser.add_argument('--output-dir', type=str, default='models',
                         help='Output directory for models and logs')
     
     # Model arguments
-    parser.add_argument('--model-type', type=str, default='panns',
-                        choices=['crnn', 'panns', 'transformer', 'snn', 'hpc_snn'],
-                        help='Model architecture to use')
+    parser.add_argument('--model-type', type=str, required=True,
+                        choices=['panns', 'transformer', 'snn', 'hpc_snn'],
+                        help='Model architecture to train')
     parser.add_argument('--use-hpss', action='store_true', default=True,
                         help='Use HPSS for 3-channel input')
     
     # SNN-specific arguments
-    parser.add_argument('--snn-timesteps', type=int, default=4,
-                        help='Number of SNN simulation timesteps (2-8 typical)')
+    parser.add_argument('--snn-timesteps', type=int, default=10,
+                        help='Number of SNN simulation timesteps')
     parser.add_argument('--use-ttfs', action='store_true',
-                        help='Use time-to-first-spike encoding (else rate coding)')
-    parser.add_argument('--spike-slope', type=float, default=25.0,
-                        help='Surrogate gradient slope for SNN (10-50)')
-    parser.add_argument('--snn-depth', type=int, default=None,
-                        help='Transformer depth for SNN (default: use model default)')
+                        help='Use time-to-first-spike encoding')
+    parser.add_argument('--spike-slope', type=float, default=35.0,
+                        help='Surrogate gradient slope for SNN')
     
     # Training arguments
-    parser.add_argument('--epochs', type=int, default=250,
+    parser.add_argument('--epochs', type=int, default=50,
                         help='Number of training epochs')
     parser.add_argument('--batch-size', type=int, default=32,
                         help='Batch size')
     parser.add_argument('--lr', type=float, default=1e-4,
-                        help='Learning rate (use lower for SNN, e.g., 5e-5)')
+                        help='Learning rate')
     parser.add_argument('--weight-decay', type=float, default=0.01,
                         help='Weight decay')
     parser.add_argument('--warmup-ratio', type=float, default=0.1,
-                        help='Warmup ratio (0.0-1.0)')
+                        help='Warmup ratio')
     parser.add_argument('--min-lr-ratio', type=float, default=0.01,
-                        help='Minimum LR as ratio of initial LR')
+                        help='Minimum LR ratio')
     
     # Loss arguments
-    parser.add_argument('--use-focal-loss', action='store_true',
-                        help='Use focal loss instead of cross entropy')
-    parser.add_argument('--focal-gamma', type=float, default=1.0,
+    parser.add_argument('--use-focal-loss', action='store_true', default=True,
+                        help='Use focal loss (recommended for drone recall)')
+    parser.add_argument('--use-class-balanced', action='store_true',
+                        help='Use class-balanced loss instead of focal')
+    parser.add_argument('--focal-gamma', type=float, default=2.0,
                         help='Focal loss gamma parameter')
     parser.add_argument('--label-smoothing', type=float, default=0.05,
                         help='Label smoothing factor')
     parser.add_argument('--use-class-weights', action='store_true', default=True,
-                        help='Use class weights for imbalanced data')
+                        help='Use class weights')
     
-    # Regularization arguments
-    parser.add_argument('--patience', type=int, default=10,
+    # Balanced sampling
+    parser.add_argument('--balanced-sampling', action='store_true', default=True,
+                        help='Use balanced sampler for equal class representation')
+    
+    # Knowledge distillation arguments
+    parser.add_argument('--use-kd', action='store_true', default=True,
+                        help='Use knowledge distillation from CRNN teacher')
+    parser.add_argument('--teacher-model', type=str,
+                        default='models/crnn_combined/crnn_final.pt',
+                        help='Path to teacher model checkpoint')
+    parser.add_argument('--kd-temperature', type=float, default=3.0,
+                        help='KD temperature (2-5 typical)')
+    parser.add_argument('--kd-alpha', type=float, default=0.5,
+                        help='KD alpha (weight for soft targets)')
+    
+    # Regularization
+    parser.add_argument('--patience', type=int, default=15,
                         help='Early stopping patience')
     
     # System arguments
@@ -334,32 +452,7 @@ def main():
                         choices=['auto', 'cuda', 'cpu'],
                         help='Device to use')
     
-    # Debugging arguments
-    parser.add_argument('--max-samples', type=int, default=None,
-                        help='Max samples per class (for debugging)')
-    parser.add_argument('--quick-test', action='store_true',
-                        help='Quick test with 2 epochs and small data')
-    
     args = parser.parse_args()
-    
-    # Quick test mode
-    if args.quick_test:
-        args.epochs = 2
-        args.max_samples = 50
-        args.batch_size = 8
-        print("\n⚡ QUICK TEST MODE ENABLED")
-    
-    # Auto-adjust hyperparameters for SNN if using defaults
-    if args.model_type in ['snn', 'hpc_snn']:
-        # Lower learning rate for SNN stability if using default
-        if args.lr == 1e-4:  # Default value
-            args.lr = 5e-5
-            print(f"\n📊 Auto-adjusted LR for SNN: {args.lr:.6f}")
-        
-        # Reduce batch size if memory constrained
-        if args.batch_size > 32:
-            args.batch_size = 16
-            print(f"📊 Auto-adjusted batch size for SNN: {args.batch_size}")
     
     # Set random seed
     torch.manual_seed(args.seed)
@@ -373,24 +466,16 @@ def main():
         device = torch.device(args.device)
     
     # Create output directory
-    output_dir = Path(args.output_dir)
+    output_dir = Path(args.output_dir) / f'{args.model_type}_improved'
     output_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Save config (convert Path to string for JSON serialization)
-    config_dict = vars(args).copy()
-    config_dict['output_dir'] = str(args.output_dir)
-    with open(output_dir / 'config.json', 'w') as f:
-        json.dump(config_dict, f, indent=2)
-    
-    # Update args.output_dir to Path object for rest of code
     args.output_dir = output_dir
     
-    print("\n" + "="*60)
-    print("ACOUSTIC DRONE DETECTION TRAINING")
-    print("="*60)
+    print(f"\n{'='*70}")
+    print(f"IMPROVED {args.model_type.upper()} TRAINING")
+    print(f"{'='*70}\n")
     
     # Create preprocessor and augmentation
-    print("\nInitializing preprocessing pipeline...")
+    print("Initializing preprocessing pipeline...")
     preprocessor = AudioPreprocessor(
         sample_rate=16000,
         n_fft=1024,
@@ -405,29 +490,22 @@ def main():
         use_time_pitch=True,
         use_noise=True,
         use_spec_augment=True,
-        use_mixup=False  # Mixup requires special handling in training loop
+        use_mixup=False,
+        use_notch_filter=True,  # New!
+        use_band_limiting=True  # New!
     )
     
     # Create dataloaders
     print("Loading datasets...")
-    
-    # Resolve paths to absolute
     train_dir = Path(args.train_dir).resolve()
     val_dir = Path(args.val_dir).resolve()
     
-    # Check if paths exist
     if not train_dir.exists():
         print(f"\n❌ ERROR: Training directory not found: {train_dir}")
-        print("\nPlease use one of these formats:")
-        print("  Absolute: --train-dir f:/EDTH/acoustic-drone-detector/data/edth_munich_dataset/data/train")
-        print("  Relative: --train-dir data/edth_munich_dataset/data/train")
         sys.exit(1)
     
     if not val_dir.exists():
         print(f"\n❌ ERROR: Validation directory not found: {val_dir}")
-        print("\nPlease use one of these formats:")
-        print("  Absolute: --val-dir f:/EDTH/acoustic-drone-detector/data/edth_munich_dataset/data/val")
-        print("  Relative: --val-dir data/edth_munich_dataset/data/val")
         sys.exit(1)
     
     print(f"✓ Training directory: {train_dir}")
@@ -440,7 +518,7 @@ def main():
         augmentation_pipeline=augmentation,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
-        max_samples_per_class=args.max_samples
+        use_balanced_sampler=args.balanced_sampling
     )
     
     print(f"Training batches: {len(train_loader)}")
@@ -448,59 +526,55 @@ def main():
     print(f"Class weights: {class_weights}")
     print(f"Samples per class: {samples_per_class}")
     
-    # Create model
-    print(f"\nCreating {args.model_type} model...")
+    # Load teacher model for KD
+    teacher_model = None
+    if args.use_kd:
+        teacher_path = Path(args.teacher_model)
+        if teacher_path.exists():
+            try:
+                teacher_model = load_teacher_model(str(teacher_path), device)
+            except Exception as e:
+                print(f"⚠️  Warning: Could not load teacher model: {e}")
+                print("  Continuing without knowledge distillation")
+                args.use_kd = False
+        else:
+            print(f"⚠️  Warning: Teacher model not found: {teacher_path}")
+            print("  Continuing without knowledge distillation")
+            args.use_kd = False
+    
+    # Create student model
+    print(f"\nCreating {args.model_type} student model...")
     input_channels = 3 if args.use_hpss else 1
     
-    # Build model kwargs
     model_kwargs = {
         'num_classes': 3,
         'input_channels': input_channels,
     }
     
-    # Add n_mels for CRNN (other models don't need it)
-    if args.model_type == 'crnn':
-        model_kwargs['n_mels'] = 96
-    
-    # Add SNN-specific parameters
     if args.model_type in ['snn', 'hpc_snn']:
         model_kwargs['snn_timesteps'] = args.snn_timesteps
         model_kwargs['use_ttfs'] = args.use_ttfs
         model_kwargs['spike_slope'] = args.spike_slope
-        
-        # Set depth if specified
-        if args.snn_depth is not None:
-            model_kwargs['depth'] = args.snn_depth
-        
-        print(f"  SNN Configuration:")
-        print(f"    - Timesteps: {args.snn_timesteps}")
-        print(f"    - Encoding: {'TTFS' if args.use_ttfs else 'Rate Coding'}")
-        print(f"    - Spike slope: {args.spike_slope}")
-        if args.snn_depth:
-            print(f"    - Transformer depth: {args.snn_depth}")
+        print(f"  SNN config: timesteps={args.snn_timesteps}, TTFS={args.use_ttfs}, slope={args.spike_slope}")
     
     model = create_model(model_type=args.model_type, **model_kwargs)
-    
     model = model.to(device)
     
     num_params = sum(p.numel() for p in model.parameters())
     print(f"Model parameters: {num_params / 1e6:.2f}M")
     
     # Train
-    print("\nStarting training...")
-    best_epoch, best_macro_f1 = train(
-        model, train_loader, val_loader,
-        class_weights, args, device
+    print("\nStarting training with improvements...")
+    best_epoch, best_macro_f1, best_drone_recall = train(
+        model, teacher_model, train_loader, val_loader,
+        class_weights, samples_per_class, args, device
     )
     
     # Final evaluation
     print("\nPerforming final evaluation...")
-    
-    # Load best model
     checkpoint = torch.load(args.output_dir / 'best_model.pt')
     model.load_state_dict(checkpoint['model_state_dict'])
     
-    # Comprehensive evaluation
     results = evaluate_model(
         model, val_loader, device,
         compute_roc=True,
@@ -509,7 +583,7 @@ def main():
     
     print_evaluation_report(results['metrics'], results['confusion_matrix'])
     
-    # Save final model (weights only for deployment)
+    # Save final model
     torch.save({
         'model_state_dict': model.state_dict(),
         'model_type': args.model_type,
@@ -518,6 +592,7 @@ def main():
         'n_mels': 96,
         'best_epoch': best_epoch,
         'best_macro_f1': best_macro_f1,
+        'best_drone_recall': best_drone_recall,
         'metrics': results['metrics']
     }, args.output_dir / f'{args.model_type}_final.pt')
     
@@ -531,10 +606,9 @@ def main():
         json.dump(class_mapping, f, indent=2)
     
     print(f"\n✓ Training complete!")
-    print(f"  Best model saved to: {args.output_dir / 'best_model.pt'}")
-    print(f"  Final model saved to: {args.output_dir / f'{args.model_type}_final.pt'}")
-    print(f"  Labels saved to: {args.output_dir / 'labels.json'}")
-    print(f"  Training history saved to: {args.output_dir / 'training_history.json'}")
+    print(f"  Best model: {args.output_dir / 'best_model.pt'}")
+    print(f"  Final model: {args.output_dir / f'{args.model_type}_final.pt'}")
+    print(f"  Drone recall: {args.output_dir / 'best_drone_recall.pt'}")
 
 
 if __name__ == '__main__':

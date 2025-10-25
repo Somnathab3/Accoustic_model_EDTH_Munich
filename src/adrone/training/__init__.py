@@ -2,6 +2,8 @@
 from .losses import (
     LabelSmoothingCrossEntropy,
     FocalLoss,
+    ClassBalancedLoss,
+    DistillationLoss,
     CombinedLoss,
     cosine_schedule_with_warmup,
     EarlyStopping,
@@ -11,6 +13,8 @@ from .losses import (
 __all__ = [
     'LabelSmoothingCrossEntropy',
     'FocalLoss',
+    'ClassBalancedLoss',
+    'DistillationLoss',
     'CombinedLoss',
     'cosine_schedule_with_warmup',
     'EarlyStopping',

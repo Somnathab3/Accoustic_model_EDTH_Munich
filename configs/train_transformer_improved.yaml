@@ -1,0 +1,189 @@
+# Improved Transformer Configuration for Acoustic Drone Detection
+# Addresses undertraining (Val F1 0.647, drone recall 0.408)
+# Focus: Pretrained weights, regularization, and knowledge distillation
+
+model:
+  type: 'transformer'  # AST/HTS-AT style
+  num_classes: 3  # background, drone, helicopter
+  input_channels: 3  # HPSS: total, harmonic, percussive
+  
+  # Architecture
+  patch_size: 16
+  stride: 12  # Overlap patches (stride < patch_size)
+  embed_dim: 384
+  depth: 12  # Standard ViT-Small depth
+  num_heads: 6
+  mlp_ratio: 4.0
+  
+  # Regularization
+  dropout: 0.1
+  drop_path: 0.1  # Stochastic depth
+  attention_dropout: 0.0
+  
+  # Pooling head
+  use_class_token: true
+  use_attentive_pooling: true  # Hybrid: CLS + attentive pooling
+  head_dropout: 0.2
+  
+  # Auxiliary task (binary: aircraft vs background)
+  use_auxiliary_head: true
+  aux_weight: 0.3
+  
+  # Pretrained weights
+  pretrained: false  # Set to true if AST/HTS-AT weights available
+  pretrained_path: null  # Path to pretrained checkpoint
+  freeze_pretrained_layers: 0.75  # Freeze bottom 75% initially
+
+# Audio Preprocessing
+audio:
+  sample_rate: 16000
+  duration: 2.0  # seconds
+  
+  # Mel spectrogram (compatible with AST/HTS-AT)
+  n_fft: 1024
+  hop_length: 320
+  win_length: 1024
+  window: 'hann'
+  n_mels: 96  # 128 for AST, but 96 works for our dataset
+  f_min: 20
+  f_max: 8000
+  
+  # HPSS
+  use_hpss: true
+  hpss_kernel_size: 31
+  hpss_power: 2.0
+  hpss_margin: 1.0
+
+# Data Augmentation (Strong regularization for Transformer)
+augmentation:
+  # SpecAugment (critical for Transformers)
+  spec_augment: true
+  time_mask_param: 30
+  freq_mask_param: 15
+  n_time_masks: 2
+  n_freq_masks: 2
+  
+  # Audio augmentations
+  noise_injection: true
+  snr_curriculum: true
+  snr_range: [0, 15]
+  
+  # RPM variations
+  pitch_shift: true
+  pitch_range: [-5.0, 5.0]
+  time_shift: true
+  
+  # Microphone simulation
+  narrowband_notch: true
+  band_limiting: true
+  lowcut_range: [80, 150]
+  highcut_range: [6000, 8000]
+  
+  # Mixup (helps Transformers)
+  mixup: true
+  mixup_alpha: 0.4
+
+# Training Strategy
+training:
+  epochs: 50
+  batch_size: 32  # ≥32 for stable Transformer training
+  accumulation_steps: 1  # Increase if GPU memory limited
+  
+  # Progressive unfreezing (if pretrained)
+  freeze_backbone: false  # Set true if using pretrained weights
+  freeze_schedule:
+    # Phase 1: Freeze bottom 75%, train top + head
+    - {epoch: 0, freeze_ratio: 0.75, lr: 3e-4, weight_decay: 0.05}
+    # Phase 2: Freeze bottom 50%
+    - {epoch: 10, freeze_ratio: 0.50, lr: 1e-4, weight_decay: 0.05}
+    # Phase 3: Unfreeze all
+    - {epoch: 20, freeze_ratio: 0.0, lr: 5e-5, weight_decay: 0.05}
+  
+  # Optimizer (AdamW critical for Transformers)
+  optimizer: 'adamw'
+  lr: 1e-4  # Cosine decay with warmup
+  weight_decay: 0.05  # Higher for Transformers
+  betas: [0.9, 0.999]
+  
+  # Learning rate schedule
+  scheduler: 'cosine'
+  warmup_epochs: 5  # 5% warmup
+  min_lr: 1e-6
+  
+  # Loss configuration - FOCAL LOSS for drone
+  loss_type: 'focal'  # 'focal', 'class_balanced', or 'label_smoothing'
+  focal_gamma: 2.0
+  label_smoothing: 0.05  # Tames overconfidence on background
+  use_class_weights: true
+  
+  # Balanced sampling
+  balanced_sampling: true
+  
+  # Regularization
+  gradient_clip: 1.0
+  mixed_precision: true  # FP16 for faster training
+  use_ema: true  # Exponential Moving Average (0.999)
+  ema_decay: 0.999
+  
+  # Early stopping
+  patience: 15
+  min_delta: 0.001
+
+# Knowledge Distillation (CRITICAL for Transformer on small data)
+knowledge_distillation:
+  enabled: true
+  teacher_model: 'models/crnn_combined/crnn_final.pt'  # CRNN teacher
+  temperature: 4.0  # Higher temperature for Transformer
+  alpha: 0.5  # Equal weight to hard + soft targets
+  
+# Validation
+validation:
+  val_split: 0.2
+  eval_every: 1
+  save_best_by: 'f1_macro'
+  save_best_drone_recall: true
+  
+  metrics:
+    - 'accuracy'
+    - 'precision_macro'
+    - 'recall_macro'
+    - 'f1_macro'
+    - 'per_class_recall'
+    - 'per_class_precision'
+    - 'per_class_f1'
+    - 'confusion_matrix'
+
+# Hardware
+device: 'cuda'
+num_workers: 4
+pin_memory: true
+
+# Logging
+logging:
+  log_dir: './logs/transformer_improved'
+  save_dir: './models/transformer_improved'
+  experiment_name: 'transformer_focal_kd_ema'
+  log_every: 10
+  save_checkpoints: true
+  tensorboard: false
+
+# Dataset paths
+data:
+  train_path: './data/combined_dataset/train'
+  val_path: './data/combined_dataset/val'
+  
+  classes:
+    0: 'background'
+    1: 'drone'
+    2: 'helicopter'
+
+# Expected improvements
+# Current Transformer: Val F1 ≈ 0.647, drone recall ≈ 0.408
+# Target: Val F1 > 0.90, drone recall > 0.80
+# Key fixes:
+#   1. KD from CRNN (biggest impact for small data)
+#   2. Focal loss for drone class
+#   3. Strong regularization (DropPath, high weight decay, EMA)
+#   4. SpecAugment + label smoothing
+#   5. Balanced sampling
+#   6. If pretrained available: progressive unfreezing

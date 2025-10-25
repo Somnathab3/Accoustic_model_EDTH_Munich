@@ -140,6 +140,20 @@ class AcousticDroneDataset(Dataset):
         
         return weights
     
+    def get_samples_per_class(self) -> torch.Tensor:
+        """
+        Get number of samples per class for class-balanced loss
+        
+        Returns:
+            Tensor of shape (num_classes,) with sample counts
+        """
+        class_counts = torch.zeros(len(self.class_to_idx))
+        
+        for _, label in self.samples:
+            class_counts[label] += 1
+        
+        return class_counts
+    
     def save_class_mapping(self, output_path: str):
         """Save class to index mapping as JSON"""
         mapping = {
@@ -160,13 +174,17 @@ def create_dataloaders(
     augmentation_pipeline,
     batch_size: int = 32,
     num_workers: int = 4,
-    max_samples_per_class: Optional[int] = None
-) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader, torch.Tensor]:
+    max_samples_per_class: Optional[int] = None,
+    use_balanced_sampler: bool = False
+) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader, torch.Tensor, torch.Tensor]:
     """
     Create training and validation dataloaders
     
+    Args:
+        use_balanced_sampler: If True, use WeightedRandomSampler for balanced mini-batches
+    
     Returns:
-        train_loader, val_loader, class_weights
+        train_loader, val_loader, class_weights, samples_per_class
     """
     # Create datasets
     train_dataset = AcousticDroneDataset(
@@ -188,11 +206,35 @@ def create_dataloaders(
     # Get class weights from training set
     class_weights = train_dataset.get_class_weights()
     
+    # Get samples per class for class-balanced loss
+    samples_per_class = train_dataset.get_samples_per_class()
+    
+    # Create balanced sampler if requested
+    sampler = None
+    shuffle = True
+    
+    if use_balanced_sampler:
+        # Compute sample weights (inverse of class frequency)
+        sample_weights = torch.zeros(len(train_dataset))
+        for idx, (_, label) in enumerate(train_dataset.samples):
+            sample_weights[idx] = class_weights[label]
+        
+        # Create weighted random sampler
+        sampler = torch.utils.data.WeightedRandomSampler(
+            weights=sample_weights,
+            num_samples=len(train_dataset),
+            replacement=True
+        )
+        shuffle = False  # Sampler handles shuffling
+        
+        print(f"✓ Using balanced sampler for training")
+    
     # Create dataloaders
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
         batch_size=batch_size,
-        shuffle=True,
+        shuffle=shuffle,
+        sampler=sampler,
         num_workers=num_workers,
         pin_memory=True,
         drop_last=True  # For stable batch norm
@@ -206,7 +248,7 @@ def create_dataloaders(
         pin_memory=True
     )
     
-    return train_loader, val_loader, class_weights
+    return train_loader, val_loader, class_weights, samples_per_class
 
 
 if __name__ == '__main__':

@@ -116,6 +116,116 @@ class FocalLoss(nn.Module):
             return focal_loss
 
 
+class ClassBalancedLoss(nn.Module):
+    """
+    Class-Balanced Loss based on Effective Number of Samples
+    From "Class-Balanced Loss Based on Effective Number of Samples" (Cui et al., 2019)
+    
+    Addresses class imbalance by re-weighting based on effective number of samples
+    """
+    
+    def __init__(
+        self,
+        samples_per_class: torch.Tensor,
+        num_classes: int,
+        beta: float = 0.9999,
+        smoothing: float = 0.05
+    ):
+        """
+        Args:
+            samples_per_class: Number of samples per class [class0_count, class1_count, ...]
+            num_classes: Total number of classes
+            beta: Hyperparameter for effective number (0.9-0.9999, higher = more aggressive reweighting)
+            smoothing: Label smoothing factor
+        """
+        super().__init__()
+        self.num_classes = num_classes
+        self.smoothing = smoothing
+        
+        # Compute effective number of samples
+        effective_num = 1.0 - torch.pow(beta, samples_per_class)
+        weights = (1.0 - beta) / effective_num
+        weights = weights / weights.sum() * num_classes  # Normalize
+        
+        self.register_buffer('weights', weights)
+    
+    def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """
+        Args:
+            pred: Logits of shape (batch, num_classes)
+            target: Hard labels of shape (batch,)
+        """
+        # Apply label smoothing
+        soft_target = torch.full_like(pred, self.smoothing / (self.num_classes - 1))
+        soft_target.scatter_(1, target.unsqueeze(1), 1.0 - self.smoothing)
+        
+        # Compute log probabilities
+        log_probs = F.log_softmax(pred, dim=-1)
+        
+        # Apply class-balanced weights
+        weight_expanded = self.weights.unsqueeze(0).expand_as(log_probs)
+        loss = -(soft_target * log_probs * weight_expanded).sum(dim=-1)
+        
+        return loss.mean()
+
+
+class DistillationLoss(nn.Module):
+    """
+    Knowledge Distillation Loss
+    Combines hard target loss with soft target (teacher) loss
+    From "Distilling the Knowledge in a Neural Network" (Hinton et al., 2015)
+    """
+    
+    def __init__(
+        self,
+        temperature: float = 3.0,
+        alpha: float = 0.5,
+        base_criterion: Optional[nn.Module] = None
+    ):
+        """
+        Args:
+            temperature: Temperature for softening probabilities (2-5 typical)
+            alpha: Weight for distillation loss (0-1, rest goes to hard target loss)
+            base_criterion: Base loss for hard targets (default: CrossEntropyLoss)
+        """
+        super().__init__()
+        self.temperature = temperature
+        self.alpha = alpha
+        self.base_criterion = base_criterion if base_criterion else nn.CrossEntropyLoss()
+    
+    def forward(
+        self,
+        student_logits: torch.Tensor,
+        teacher_logits: torch.Tensor,
+        target: torch.Tensor
+    ) -> torch.Tensor:
+        """
+        Args:
+            student_logits: Student model predictions (batch, num_classes)
+            teacher_logits: Teacher model predictions (batch, num_classes)
+            target: Hard labels (batch,)
+        
+        Returns:
+            Combined distillation loss
+        """
+        # Hard target loss
+        hard_loss = self.base_criterion(student_logits, target)
+        
+        # Soft target loss (KL divergence between student and teacher)
+        soft_student = F.log_softmax(student_logits / self.temperature, dim=-1)
+        soft_teacher = F.softmax(teacher_logits / self.temperature, dim=-1)
+        
+        # KL divergence * T^2 (temperature scaling)
+        soft_loss = F.kl_div(
+            soft_student,
+            soft_teacher,
+            reduction='batchmean'
+        ) * (self.temperature ** 2)
+        
+        # Combine losses
+        return self.alpha * soft_loss + (1.0 - self.alpha) * hard_loss
+
+
 class CombinedLoss(nn.Module):
     """
     Combination of label smoothing cross entropy and auxiliary losses
@@ -126,31 +236,45 @@ class CombinedLoss(nn.Module):
         self,
         use_focal: bool = False,
         use_label_smoothing: bool = True,
+        use_class_balanced: bool = False,
         class_weights: Optional[torch.Tensor] = None,
+        samples_per_class: Optional[torch.Tensor] = None,
+        num_classes: int = 3,
         smoothing: float = 0.05,
-        focal_gamma: float = 1.0
+        focal_gamma: float = 2.0,
+        cb_beta: float = 0.9999
     ):
         super().__init__()
         
         self.use_focal = use_focal
         self.use_label_smoothing = use_label_smoothing
+        self.use_class_balanced = use_class_balanced
         
-        if use_focal:
-            self.focal_loss = FocalLoss(alpha=class_weights, gamma=focal_gamma)
+        if use_class_balanced and samples_per_class is not None:
+            # Class-balanced loss (best for imbalanced data)
+            self.loss_fn = ClassBalancedLoss(
+                samples_per_class=samples_per_class,
+                num_classes=num_classes,
+                beta=cb_beta,
+                smoothing=smoothing
+            )
+        elif use_focal:
+            # Focal loss (good for hard examples)
+            self.loss_fn = FocalLoss(alpha=class_weights, gamma=focal_gamma)
         elif use_label_smoothing:
-            self.ce_loss = LabelSmoothingCrossEntropy(smoothing=smoothing, weight=class_weights)
+            # Label smoothing CE (default)
+            self.loss_fn = LabelSmoothingCrossEntropy(smoothing=smoothing, weight=class_weights)
         else:
-            self.ce_loss = nn.CrossEntropyLoss(weight=class_weights)
+            # Standard CE
+            self.loss_fn = nn.CrossEntropyLoss(weight=class_weights)
     
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         """Compute combined loss"""
-        if self.use_focal:
-            # Focal loss only works with hard labels
+        if self.use_focal or self.use_class_balanced:
+            # Focal and CB loss only work with hard labels
             if target.dim() > 1:
                 target = target.argmax(dim=1)
-            return self.focal_loss(pred, target)
-        else:
-            return self.ce_loss(pred, target)
+        return self.loss_fn(pred, target)
 
 
 def cosine_schedule_with_warmup(

@@ -249,12 +249,13 @@ class TimePitchAugmentation(nn.Module):
     """
     Apply small time stretching and pitch shifting
     Simulates RPM variations and Doppler effects
+    Enhanced with ±3-5% pitch for rotor harmonics
     """
     
     def __init__(
         self,
         time_stretch_range: Tuple[float, float] = (0.95, 1.05),
-        pitch_shift_range: Tuple[int, int] = (-2, 2),
+        pitch_shift_range: Tuple[float, float] = (-5.0, 5.0),  # ±5% in semitones
         p: float = 0.5
     ):
         super().__init__()
@@ -268,20 +269,152 @@ class TimePitchAugmentation(nn.Module):
             return waveform
         
         audio_np = waveform.squeeze().numpy()
+        original_audio = audio_np.copy()  # Keep backup
         
-        # Random time stretch
-        if random.random() > 0.5:
-            rate = random.uniform(*self.time_stretch_range)
-            audio_np = librosa.effects.time_stretch(audio_np, rate=rate)
+        try:
+            # Random time stretch
+            if random.random() > 0.5:
+                rate = random.uniform(*self.time_stretch_range)
+                audio_np = librosa.effects.time_stretch(audio_np, rate=rate)
+            
+            # Random pitch shift (continuous for smoother RPM variation)
+            if random.random() > 0.5:
+                n_steps = random.uniform(*self.pitch_shift_range)
+                audio_np = librosa.effects.pitch_shift(
+                    audio_np,
+                    sr=sample_rate,
+                    n_steps=n_steps
+                )
+            
+            # Check for NaN/Inf
+            if not np.isfinite(audio_np).all():
+                audio_np = original_audio
+        except:
+            # If augmentation fails, use original
+            audio_np = original_audio
         
-        # Random pitch shift
-        if random.random() > 0.5:
-            n_steps = random.randint(*self.pitch_shift_range)
-            audio_np = librosa.effects.pitch_shift(
-                audio_np,
-                sr=sample_rate,
-                n_steps=n_steps
-            )
+        return torch.from_numpy(audio_np).unsqueeze(0).float()
+
+
+class NarrowbandNotchFilter(nn.Module):
+    """
+    Apply random narrowband notch filters to simulate microphone characteristics
+    Helps model be robust to frequency response variations
+    """
+    
+    def __init__(
+        self,
+        sample_rate: int = 16000,
+        notch_range: Tuple[float, float] = (500, 4000),  # Hz
+        q_factor_range: Tuple[float, float] = (5, 30),  # Quality factor
+        num_notches_range: Tuple[int, int] = (1, 3),
+        p: float = 0.3
+    ):
+        super().__init__()
+        self.sample_rate = sample_rate
+        self.notch_range = notch_range
+        self.q_factor_range = q_factor_range
+        self.num_notches_range = num_notches_range
+        self.p = p
+    
+    def forward(self, waveform: torch.Tensor) -> torch.Tensor:
+        """Apply random notch filters"""
+        if not self.training or random.random() > self.p:
+            return waveform
+        
+        from scipy import signal
+        import numpy as np
+        
+        audio_np = waveform.squeeze().numpy()
+        num_notches = random.randint(*self.num_notches_range)
+        
+        for _ in range(num_notches):
+            # Random notch frequency and Q
+            notch_freq = random.uniform(*self.notch_range)
+            q_factor = random.uniform(*self.q_factor_range)
+            
+            try:
+                # Design notch filter
+                b, a = signal.iirnotch(notch_freq, q_factor, self.sample_rate)
+                
+                # Apply filter
+                filtered = signal.filtfilt(b, a, audio_np)
+                
+                # Check for NaN/Inf
+                if np.isfinite(filtered).all():
+                    audio_np = filtered
+                # If filter produces invalid values, skip it
+            except:
+                # If filter design fails, skip it
+                pass
+        
+        # Copy to fix negative stride issue with PyTorch
+        return torch.from_numpy(audio_np.copy()).unsqueeze(0).float()
+
+
+class BandLimitingFilter(nn.Module):
+    """
+    Apply random band-limiting to simulate different microphones
+    Typical acoustic sensors have limited frequency response
+    """
+    
+    def __init__(
+        self,
+        sample_rate: int = 16000,
+        lowcut_range: Tuple[float, float] = (80, 150),  # Hz
+        highcut_range: Tuple[float, float] = (6000, 8000),  # Hz
+        order: int = 5,
+        p: float = 0.4
+    ):
+        super().__init__()
+        self.sample_rate = sample_rate
+        self.lowcut_range = lowcut_range
+        self.highcut_range = highcut_range
+        self.order = order
+        self.p = p
+    
+    def forward(self, waveform: torch.Tensor) -> torch.Tensor:
+        """Apply random bandpass filter"""
+        if not self.training or random.random() > self.p:
+            return waveform
+        
+        from scipy import signal
+        import numpy as np
+        
+        audio_np = waveform.squeeze().numpy()
+        
+        # Random cutoff frequencies
+        lowcut = random.uniform(*self.lowcut_range)
+        highcut = random.uniform(*self.highcut_range)
+        
+        try:
+            # Design bandpass filter
+            nyquist = self.sample_rate / 2.0
+            low = lowcut / nyquist
+            high = highcut / nyquist
+            
+            # Ensure valid frequency range
+            low = max(0.01, min(low, 0.99))
+            high = max(low + 0.01, min(high, 0.99))
+            
+            b, a = signal.butter(self.order, [low, high], btype='band')
+            
+            # Apply filter
+            filtered = signal.filtfilt(b, a, audio_np)
+            
+            # Check for NaN/Inf
+            if np.isfinite(filtered).all():
+                audio_np = filtered
+            # If filter produces invalid values, return original
+        except:
+            # If filter design fails, return original
+            pass
+        
+        # Copy to fix negative stride issue with PyTorch
+        return torch.from_numpy(audio_np.copy()).unsqueeze(0).float()
+        
+        # Copy to fix negative stride issue with PyTorch
+        return torch.from_numpy(audio_np.copy()).unsqueeze(0).float()
         
         return torch.from_numpy(audio_np).unsqueeze(0).float()
 
@@ -338,6 +471,7 @@ class AugmentationPipeline(nn.Module):
     """
     Complete augmentation pipeline for training
     Applies all augmentations in optimal order
+    Enhanced with rotor-specific augmentations
     """
     
     def __init__(
@@ -346,7 +480,9 @@ class AugmentationPipeline(nn.Module):
         use_time_pitch: bool = True,
         use_noise: bool = True,
         use_spec_augment: bool = True,
-        use_mixup: bool = True
+        use_mixup: bool = True,
+        use_notch_filter: bool = True,
+        use_band_limiting: bool = True
     ):
         super().__init__()
         self.sample_rate = sample_rate
@@ -354,6 +490,8 @@ class AugmentationPipeline(nn.Module):
         self.use_noise = use_noise
         self.use_spec_augment = use_spec_augment
         self.use_mixup = use_mixup
+        self.use_notch_filter = use_notch_filter
+        self.use_band_limiting = use_band_limiting
         
         # Initialize transforms
         if use_time_pitch:
@@ -361,6 +499,12 @@ class AugmentationPipeline(nn.Module):
         
         if use_noise:
             self.noise_mixer = BackgroundNoiseMixer(p=0.4)
+        
+        if use_notch_filter:
+            self.notch_filter = NarrowbandNotchFilter(sample_rate=sample_rate, p=0.3)
+        
+        if use_band_limiting:
+            self.band_limiter = BandLimitingFilter(sample_rate=sample_rate, p=0.4)
         
         if use_spec_augment:
             self.spec_augment = SpecAugment(p=0.5)
@@ -375,13 +519,25 @@ class AugmentationPipeline(nn.Module):
         max_epochs: int = 50
     ) -> torch.Tensor:
         """Apply waveform-level augmentations"""
-        # Time and pitch augmentation (subtle)
+        # Time and pitch augmentation (subtle RPM variation)
         if self.use_time_pitch:
             waveform = self.time_pitch(waveform, self.sample_rate)
+        
+        # Narrowband notch filters (microphone characteristics)
+        if self.use_notch_filter:
+            waveform = self.notch_filter(waveform)
+        
+        # Band-limiting (simulate different sensors)
+        if self.use_band_limiting:
+            waveform = self.band_limiter(waveform)
         
         # Noise mixing with curriculum
         if self.use_noise:
             waveform = self.noise_mixer(waveform, current_epoch, max_epochs)
+        
+        # Final safety check: replace NaN/Inf with zeros
+        if not torch.isfinite(waveform).all():
+            waveform = torch.nan_to_num(waveform, nan=0.0, posinf=0.0, neginf=0.0)
         
         return waveform
     

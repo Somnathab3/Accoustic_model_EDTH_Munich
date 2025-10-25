@@ -1,0 +1,170 @@
+# Improved PANNS Configuration for Acoustic Drone Detection
+# Addresses low drone recall (0.651) with focal loss, KD, and progressive unfreezing
+
+model:
+  type: 'panns'
+  num_classes: 3  # background, drone, helicopter
+  input_channels: 3  # HPSS: total, harmonic, percussive
+  
+  # Attentive pooling head for better minority class recall
+  use_attentive_pooling: true
+  pooling_dropout: 0.2
+  
+  # Pretrained weights (if available)
+  pretrained: true  # Load AudioSet-pretrained CNN14/Wavegram weights
+  pretrained_path: null  # Set to path if available, else train from scratch
+
+# Audio Preprocessing
+audio:
+  sample_rate: 16000
+  duration: 2.0  # seconds (train with 1.0-2.0s random crop)
+  random_crop_range: [1.0, 2.0]  # Random truncation during training
+  
+  # Mel spectrogram settings
+  n_fft: 1024
+  hop_length: 320
+  win_length: 1024
+  window: 'hann'
+  n_mels: 96
+  f_min: 20
+  f_max: 8000
+  
+  # HPSS (Harmonic-Percussive Source Separation)
+  use_hpss: true
+  hpss_kernel_size: 31
+  hpss_power: 2.0
+  hpss_margin: 1.0
+
+# Data Augmentation (Enhanced for rotor harmonics)
+augmentation:
+  # Spectrogram augmentation
+  spec_augment: true
+  time_mask_param: 30
+  freq_mask_param: 15
+  n_time_masks: 2
+  n_freq_masks: 2
+  
+  # Audio augmentations
+  noise_injection: true
+  noise_level: 0.005
+  snr_curriculum: true  # Start SNR ≥10 dB, mix 0-5 dB by epoch 5-10
+  snr_range: [0, 15]  # dB
+  
+  # RPM variations (±3-5% pitch)
+  time_shift: true
+  pitch_shift: true
+  pitch_range: [-5.0, 5.0]  # semitones (±5%)
+  
+  # Microphone simulation
+  narrowband_notch: true
+  band_limiting: true
+  lowcut_range: [80, 150]
+  highcut_range: [6000, 8000]
+  
+  # Mixup
+  mixup: true
+  mixup_alpha: 0.4
+
+# Training Strategy
+training:
+  epochs: 40
+  batch_size: 32
+  
+  # Progressive unfreezing schedule
+  freeze_backbone: true
+  freeze_schedule:
+    # Epochs 0-5: freeze backbone, train head only
+    - {epoch: 0, freeze_layers: ['backbone'], lr: 3e-4, weight_decay: 1e-4}
+    # Epochs 6-25: unfreeze top 1/3 blocks
+    - {epoch: 6, freeze_layers: ['backbone.layer1', 'backbone.layer2'], lr: 1e-4, weight_decay: 1e-4}
+    # Epochs 26-40: unfreeze all
+    - {epoch: 26, freeze_layers: [], lr: 5e-5, weight_decay: 1e-4}
+  
+  # Base optimizer (overridden by freeze_schedule)
+  optimizer: 'adamw'
+  lr: 1e-4
+  weight_decay: 1e-4
+  betas: [0.9, 0.999]
+  
+  # Learning rate schedule (applied after progressive unfreezing)
+  scheduler: 'cosine'
+  warmup_epochs: 2
+  min_lr: 1e-6
+  
+  # Loss configuration - FOCAL LOSS for drone recall
+  loss_type: 'focal'  # 'focal', 'class_balanced', or 'label_smoothing'
+  focal_gamma: 2.0  # Strong focus on hard examples (drones)
+  label_smoothing: 0.05
+  use_class_weights: true
+  
+  # Balanced sampling for equal bg/drone/heli per batch
+  balanced_sampling: true
+  
+  # Regularization
+  gradient_clip: 1.0
+  mixed_precision: true
+  dropout: 0.2
+  
+  # Early stopping
+  patience: 10
+  min_delta: 0.001
+
+# Knowledge Distillation (from CRNN teacher)
+knowledge_distillation:
+  enabled: true
+  teacher_model: 'models/crnn_combined/crnn_final.pt'  # Best CRNN model
+  temperature: 3.0  # Soften probabilities (2-5 typical)
+  alpha: 0.5  # Weight for distillation loss (0.5 = equal hard+soft)
+  
+# Validation
+validation:
+  val_split: 0.2
+  eval_every: 1  # epochs
+  save_best_by: 'f1_macro'  # Primary metric
+  save_best_drone_recall: true  # Also save checkpoint with best drone recall
+  
+  # Metrics to track
+  metrics:
+    - 'accuracy'
+    - 'precision_macro'
+    - 'recall_macro'
+    - 'f1_macro'
+    - 'per_class_recall'  # Critical: monitor drone recall
+    - 'per_class_precision'
+    - 'per_class_f1'
+    - 'confusion_matrix'
+
+# Hardware
+device: 'cuda'
+num_workers: 4
+pin_memory: true
+
+# Logging
+logging:
+  log_dir: './logs/panns_improved'
+  save_dir: './models/panns_improved'
+  experiment_name: 'panns_focal_kd_progressive'
+  log_every: 10  # batches
+  save_checkpoints: true
+  tensorboard: false
+
+# Dataset paths (override via command line)
+data:
+  train_path: './data/combined_dataset/train'
+  val_path: './data/combined_dataset/val'
+  
+  # Class mapping
+  classes:
+    0: 'background'
+    1: 'drone'
+    2: 'helicopter'
+
+# Expected improvements
+# Current PANNS: Val F1 ≈ 0.860, drone recall ≈ 0.651
+# Target: Val F1 > 0.92, drone recall > 0.85
+# Key fixes:
+#   1. Focal loss (γ=2) to up-weight drone mistakes
+#   2. Balanced sampling for equal class representation
+#   3. KD from CRNN to transfer drone discrimination
+#   4. Progressive unfreezing to prevent overfitting
+#   5. Attentive pooling for rotor harmonic focus
