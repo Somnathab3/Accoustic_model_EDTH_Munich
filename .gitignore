@@ -4,6 +4,8 @@ __pycache__/
 .env
 data/*
 !data/.gitkeep
+!data/edth_munich_dataset/
+!data/edth_munich_dataset/**
 models/*
 !models/.gitkeep
 !models/panns_final.pt
