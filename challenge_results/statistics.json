@@ -1,26 +1,26 @@
 {
-  "total_attempts": 713,
-  "correct": 142,
-  "wrong": 571,
-  "total_score": 71017,
-  "accuracy": 0.19915848527349228,
+  "total_attempts": 1033,
+  "correct": 409,
+  "wrong": 624,
+  "total_score": 116155,
+  "accuracy": 0.3959341723136496,
   "predictions": {
-    "drone": 259,
-    "background": 187,
-    "helicopter": 267
+    "drone": 355,
+    "background": 293,
+    "helicopter": 385
   },
   "confusion_matrix": {
     "background": {
-      "unknown": 185,
+      "unknown": 291,
       "not_provided": 2
     },
     "drone": {
-      "unknown": 236
+      "unknown": 332
     },
     "helicopter": {
-      "unknown": 267
+      "unknown": 385
     }
   },
   "start_time": "2025-10-24T21:15:36.050137",
-  "last_update": "2025-10-26T00:09:02.088092"
+  "last_update": "2025-10-26T09:37:37.752379"
 }

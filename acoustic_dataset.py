@@ -244,6 +244,9 @@ def create_data_loaders(
         sampler = None
         shuffle = True
     
+    # Determine pin_memory based on CUDA availability
+    use_pin_memory = torch.cuda.is_available()
+    
     # Create data loaders
     train_loader = DataLoader(
         train_dataset,
@@ -251,7 +254,7 @@ def create_data_loaders(
         sampler=sampler,
         shuffle=shuffle if sampler is None else False,
         num_workers=num_workers,
-        pin_memory=True,
+        pin_memory=use_pin_memory,
         drop_last=True
     )
     
@@ -260,7 +263,7 @@ def create_data_loaders(
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
-        pin_memory=True
+        pin_memory=use_pin_memory
     )
     
     return train_loader, val_loader, preprocessor

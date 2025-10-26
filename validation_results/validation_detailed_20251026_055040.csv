@@ -1,0 +1,5 @@
+challenge_id,baseline_original,baseline_was_correct,baseline_reinference,baseline_conf,enhanced_pred,enhanced_conf,baseline_matches,enhanced_matches,agreement
+37edf91f-4a01-4002-b177-580f46606a68,background,False,background,0.9564695358276367,background,0.7938723564147949,True,True,True
+5d051928-f7e3-489a-b11a-40272ee96aab,drone,False,drone,0.5944324135780334,drone,0.6359320282936096,True,True,True
+d1ce9bd8-cb06-4748-95c8-e692871c6c54,drone,False,drone,0.965201199054718,drone,0.9207916259765625,True,True,True
+5e9e3ae1-0507-4099-8c9d-1c29a503041c,background,False,background,0.7722536325454712,background,0.5317952036857605,True,True,True

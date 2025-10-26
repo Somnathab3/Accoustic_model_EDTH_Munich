@@ -1,0 +1,16 @@
+challenge_id,baseline_original,baseline_reinference,baseline_conf,enhanced_pred,enhanced_conf,baseline_matches,enhanced_matches,agreement
+50be9290-f121-4167-b9aa-f6a55fe774b6,background,background,0.7178782224655151,drone,0.5215795636177063,True,False,False
+a45bd346-cbde-4b40-94a0-7819b839f66d,helicopter,helicopter,0.585073709487915,background,0.567009687423706,True,False,False
+6a414819-abc9-4b17-84f8-d30de1600dbc,drone,background,0.9500249028205872,background,0.736676037311554,False,False,True
+d4d428ae-e0ce-4617-ab9d-88bbcc1362f2,drone,helicopter,0.8326637744903564,helicopter,0.629282534122467,False,False,True
+d7246aa7-aed4-46ba-a8b0-fc1245460b79,drone,helicopter,0.7399502396583557,helicopter,0.6046725511550903,False,False,True
+5e6d7c65-9ed6-489c-8ff8-97fafb085a71,drone,background,0.7416905760765076,background,0.7331075668334961,False,False,True
+aa6763db-b9b4-41d9-aa43-b3a4842564d9,background,drone,0.5726047158241272,drone,0.6203122735023499,False,False,True
+e1160d8e-73bb-4328-be17-31126cd4a6e9,drone,helicopter,0.8922014236450195,helicopter,0.7506186962127686,False,False,True
+5631f943-3cd5-4563-bd6a-9b314b77df74,drone,helicopter,0.5413172245025635,helicopter,0.8451847434043884,False,False,True
+78792a25-fd6b-4a61-b63c-122a2b6ee5ca,drone,background,0.48453617095947266,background,0.47633975744247437,False,False,True
+2de05126-0718-4c3f-bc58-a66e729666d8,helicopter,helicopter,0.5282768607139587,background,0.5724146366119385,True,False,False
+18cec542-f18f-4307-929e-e8b00b87b865,helicopter,helicopter,0.46891650557518005,background,0.6367153525352478,True,False,False
+4ec835da-0353-4bf7-a5e1-d79c57e5b843,drone,background,0.6357505321502686,background,0.6089398860931396,False,False,True
+f89afb43-f744-47a5-a5bf-b04a8b7eddcf,background,drone,0.526282012462616,drone,0.6459144353866577,False,False,True
+02fed679-7bd9-4de6-809a-dcd5e60e337c,helicopter,helicopter,0.8855304718017578,background,0.43931567668914795,True,False,False

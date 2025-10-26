@@ -1,0 +1,12 @@
+challenge_id,baseline_original,baseline_was_correct,baseline_reinference,baseline_conf,enhanced_pred,enhanced_conf,baseline_matches,enhanced_matches,agreement
+d7246aa7-aed4-46ba-a8b0-fc1245460b79,drone,False,helicopter,0.7005428671836853,helicopter,0.655583381652832,False,False,True
+5e6d7c65-9ed6-489c-8ff8-97fafb085a71,drone,False,background,0.8428757786750793,background,0.5159498453140259,False,False,True
+aa6763db-b9b4-41d9-aa43-b3a4842564d9,background,False,drone,0.6292683482170105,drone,0.647040605545044,False,False,True
+cb2611cf-eba1-4b42-8e66-8e6410a89daa,helicopter,False,helicopter,0.7033358812332153,background,0.51274174451828,True,False,False
+5631f943-3cd5-4563-bd6a-9b314b77df74,drone,False,helicopter,0.7681194543838501,helicopter,0.5174026489257812,False,False,True
+78792a25-fd6b-4a61-b63c-122a2b6ee5ca,drone,False,background,0.5131548643112183,background,0.6049121022224426,False,False,True
+15fdc482-240a-4c10-bf7e-a90b0feb9900,helicopter,False,helicopter,0.8574931025505066,background,0.4479305148124695,True,False,False
+2de05126-0718-4c3f-bc58-a66e729666d8,helicopter,False,helicopter,0.5614379048347473,background,0.5415133237838745,True,False,False
+0a2c625c-f3da-4453-a024-0d8000d493bb,helicopter,False,helicopter,0.7989845871925354,background,0.459968239068985,True,False,False
+18cec542-f18f-4307-929e-e8b00b87b865,helicopter,False,helicopter,0.5889931917190552,background,0.4983401894569397,True,False,False
+4ec835da-0353-4bf7-a5e1-d79c57e5b843,drone,False,background,0.5324307680130005,background,0.5285738110542297,False,False,True

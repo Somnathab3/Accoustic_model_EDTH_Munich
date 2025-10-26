@@ -1,0 +1,17 @@
+Metric,Baseline,LIGO-Modified,Improvement
+Overall Accuracy,89.87%,94.44%,+4.58%
+Macro Precision,90.73%,94.62%,+3.89%
+Macro Recall,90.34%,94.70%,+4.36%
+Macro F1 Score,89.89%,94.41%,+4.52%
+────────────────────────────────────────,───────────────,───────────────,───────────────
+drone - Precision,78.45%,85.85%,+7.40%
+drone - Recall,98.91%,98.91%,+0.00%
+drone - F1,87.50%,91.92%,+4.42%
+helicopter - Precision,97.83%,98.98%,+1.15%
+helicopter - Recall,82.57%,88.99%,+6.42%
+helicopter - F1,89.55%,93.72%,+4.17%
+background - Precision,95.92%,99.02%,+3.10%
+background - Recall,89.52%,96.19%,+6.67%
+background - F1,92.61%,97.58%,+4.97%
+────────────────────────────────────────,───────────────,───────────────,───────────────
+Avg Inference Time,3.66 ms,3.42 ms,-0.24 ms

@@ -1,0 +1,2033 @@
+{
+  "CRNN (Combined)": {
+    "overall": {
+      "accuracy": 0.3333333333333333,
+      "precision": 0.1111111111111111,
+      "recall": 0.3333333333333333,
+      "f1_score": 0.16666666666666666
+    },
+    "per_class": {
+      "background": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_score": 0.0,
+        "support": 30
+      },
+      "drone": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_score": 0.0,
+        "support": 30
+      },
+      "helicopter": {
+        "precision": 0.3333333333333333,
+        "recall": 1.0,
+        "f1_score": 0.5,
+        "support": 30
+      }
+    },
+    "confusion_matrix": [
+      [
+        0,
+        0,
+        30
+      ],
+      [
+        0,
+        0,
+        30
+      ],
+      [
+        0,
+        0,
+        30
+      ]
+    ],
+    "file_results": [
+      {
+        "filename": "BACKGROUND_001",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47894546389579773,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_002",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47268545627593994,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_003",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47772476077079773,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_004",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4742112457752228,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_005",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4634951651096344,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_006",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.48010072112083435,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_007",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.46084097027778625,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_008",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4777083396911621,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_009",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47966161370277405,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_010",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4739418029785156,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_011",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4777192175388336,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_012",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47398626804351807,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_013",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4721945524215698,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_014",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.46446511149406433,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_015",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4761705994606018,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_016",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47135865688323975,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_017",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.48189109563827515,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_018",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4769095480442047,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_019",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4739418029785156,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_020",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47351253032684326,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_021",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4783550798892975,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_022",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47956451773643494,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_023",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4755226671695709,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_024",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47779399156570435,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_025",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.46223631501197815,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_026",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.476833313703537,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_027",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4713246524333954,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_028",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4618740379810333,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_029",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4860343635082245,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_030",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47641587257385254,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_001",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4931831955909729,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_002",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.47326186299324036,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_003",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.49744781851768494,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_004",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.48543307185173035,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_005",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4823598861694336,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_006",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4816124439239502,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_007",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4794609844684601,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_008",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4825138747692108,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_009",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4850254952907562,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_010",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4812540113925934,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_011",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.48824501037597656,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_012",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4776228666305542,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_013",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4814873933792114,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_014",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.48865634202957153,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_015",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.48050013184547424,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_016",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.488897442817688,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_017",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.48563018441200256,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_018",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.47908949851989746,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_019",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4998960793018341,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_020",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.47381025552749634,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_021",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4833816885948181,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_022",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4836941361427307,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_023",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4858795702457428,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_024",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4798487424850464,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_025",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.47570449113845825,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_026",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.47787487506866455,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_027",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.49123576283454895,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_028",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4816848933696747,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_029",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.5091952085494995,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_030",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4723304808139801,
+        "correct": false
+      },
+      {
+        "filename": "HELICOPTER_001",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4815763235092163,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_002",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.48510032892227173,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_003",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.48221781849861145,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_004",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47561338543891907,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_005",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47926270961761475,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_006",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4786624312400818,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_007",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4790414571762085,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_008",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.48782163858413696,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_009",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.491096556186676,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_010",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47601497173309326,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_011",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4775625765323639,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_012",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.48176318407058716,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_013",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4790494441986084,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_014",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.476531982421875,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_015",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4756711423397064,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_016",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.48201149702072144,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_017",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4899948537349701,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_018",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47628253698349,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_019",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47911548614501953,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_020",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47150447964668274,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_021",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47271406650543213,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_022",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4769715964794159,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_023",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4729943573474884,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_024",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4758129417896271,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_025",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4759182929992676,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_026",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47948306798934937,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_027",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4820590317249298,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_028",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4691227376461029,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_029",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47853267192840576,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_030",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47509273886680603,
+        "correct": true
+      }
+    ]
+  },
+  "CRNN (Hard Mining)": {
+    "overall": {
+      "accuracy": 0.3333333333333333,
+      "precision": 0.1111111111111111,
+      "recall": 0.3333333333333333,
+      "f1_score": 0.16666666666666666
+    },
+    "per_class": {
+      "background": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_score": 0.0,
+        "support": 30
+      },
+      "drone": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_score": 0.0,
+        "support": 30
+      },
+      "helicopter": {
+        "precision": 0.3333333333333333,
+        "recall": 1.0,
+        "f1_score": 0.5,
+        "support": 30
+      }
+    },
+    "confusion_matrix": [
+      [
+        0,
+        0,
+        30
+      ],
+      [
+        0,
+        0,
+        30
+      ],
+      [
+        0,
+        0,
+        30
+      ]
+    ],
+    "file_results": [
+      {
+        "filename": "BACKGROUND_001",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47894546389579773,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_002",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47268545627593994,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_003",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47772476077079773,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_004",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4742112457752228,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_005",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4634951651096344,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_006",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.48010072112083435,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_007",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.46084097027778625,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_008",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4777083396911621,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_009",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47966161370277405,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_010",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4739418029785156,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_011",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4777192175388336,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_012",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47398626804351807,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_013",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4721945524215698,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_014",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.46446511149406433,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_015",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4761705994606018,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_016",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47135865688323975,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_017",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.48189109563827515,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_018",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4769095480442047,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_019",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4739418029785156,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_020",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47351253032684326,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_021",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4783550798892975,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_022",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47956451773643494,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_023",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4755226671695709,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_024",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47779399156570435,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_025",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.46223631501197815,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_026",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.476833313703537,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_027",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4713246524333954,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_028",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4618740379810333,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_029",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4860343635082245,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_030",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47641587257385254,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_001",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4931831955909729,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_002",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.47326186299324036,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_003",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.49744781851768494,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_004",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.48543307185173035,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_005",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4823598861694336,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_006",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4816124439239502,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_007",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4794609844684601,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_008",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4825138747692108,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_009",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4850254952907562,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_010",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4812540113925934,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_011",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.48824501037597656,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_012",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4776228666305542,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_013",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4814873933792114,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_014",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.48865634202957153,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_015",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.48050013184547424,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_016",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.488897442817688,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_017",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.48563018441200256,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_018",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.47908949851989746,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_019",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4998960793018341,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_020",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.47381025552749634,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_021",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4833816885948181,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_022",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4836941361427307,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_023",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4858795702457428,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_024",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4798487424850464,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_025",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.47570449113845825,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_026",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.47787487506866455,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_027",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.49123576283454895,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_028",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4816848933696747,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_029",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.5091952085494995,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_030",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4723304808139801,
+        "correct": false
+      },
+      {
+        "filename": "HELICOPTER_001",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4815763235092163,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_002",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.48510032892227173,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_003",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.48221781849861145,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_004",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47561338543891907,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_005",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47926270961761475,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_006",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4786624312400818,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_007",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4790414571762085,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_008",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.48782163858413696,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_009",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.491096556186676,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_010",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47601497173309326,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_011",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4775625765323639,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_012",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.48176318407058716,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_013",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4790494441986084,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_014",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.476531982421875,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_015",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4756711423397064,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_016",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.48201149702072144,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_017",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4899948537349701,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_018",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47628253698349,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_019",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47911548614501953,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_020",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47150447964668274,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_021",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47271406650543213,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_022",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4769715964794159,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_023",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4729943573474884,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_024",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4758129417896271,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_025",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4759182929992676,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_026",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47948306798934937,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_027",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4820590317249298,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_028",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4691227376461029,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_029",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47853267192840576,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_030",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.47509273886680603,
+        "correct": true
+      }
+    ]
+  },
+  "PANNS (Combined)": {
+    "overall": {
+      "accuracy": 0.3333333333333333,
+      "precision": 0.1111111111111111,
+      "recall": 0.3333333333333333,
+      "f1_score": 0.16666666666666666
+    },
+    "per_class": {
+      "background": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_score": 0.0,
+        "support": 30
+      },
+      "drone": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_score": 0.0,
+        "support": 30
+      },
+      "helicopter": {
+        "precision": 0.3333333333333333,
+        "recall": 1.0,
+        "f1_score": 0.5,
+        "support": 30
+      }
+    },
+    "confusion_matrix": [
+      [
+        0,
+        0,
+        30
+      ],
+      [
+        0,
+        0,
+        30
+      ],
+      [
+        0,
+        0,
+        30
+      ]
+    ],
+    "file_results": [
+      {
+        "filename": "BACKGROUND_001",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.46882709860801697,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_002",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4662676453590393,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_003",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4645998179912567,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_004",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4619937837123871,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_005",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.46980953216552734,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_006",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4713626801967621,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_007",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4698246419429779,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_008",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4689892530441284,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_009",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47404396533966064,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_010",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.46478599309921265,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_011",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4720187783241272,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_012",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4651324152946472,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_013",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.46396327018737793,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_014",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.46915626525878906,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_015",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4670088291168213,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_016",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4689139425754547,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_017",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47520777583122253,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_018",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4713822901248932,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_019",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.46478599309921265,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_020",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.46882182359695435,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_021",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4716755449771881,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_022",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4735166132450104,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_023",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4668658375740051,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_024",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.46510079503059387,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_025",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47007128596305847,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_026",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.47043728828430176,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_027",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.46932053565979004,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_028",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4701912999153137,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_029",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.4704764485359192,
+        "correct": false
+      },
+      {
+        "filename": "BACKGROUND_030",
+        "true_label": "background",
+        "pred_label": "helicopter",
+        "confidence": 0.466657429933548,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_001",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4735329747200012,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_002",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4677933156490326,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_003",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4739747643470764,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_004",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4757077097892761,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_005",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.46841615438461304,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_006",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4726964235305786,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_007",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.46867695450782776,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_008",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.475717693567276,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_009",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.474382221698761,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_010",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.47092553973197937,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_011",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4774334132671356,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_012",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4716068208217621,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_013",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4745352864265442,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_014",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4748916029930115,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_015",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.47109994292259216,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_016",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4759640395641327,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_017",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4768853485584259,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_018",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.47565388679504395,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_019",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4820171892642975,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_020",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4737643003463745,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_021",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4706236720085144,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_022",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4689845144748688,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_023",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.473778635263443,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_024",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4723210036754608,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_025",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4716009795665741,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_026",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.46708497405052185,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_027",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.47862157225608826,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_028",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4779716432094574,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_029",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.4760345220565796,
+        "correct": false
+      },
+      {
+        "filename": "DRONE_030",
+        "true_label": "drone",
+        "pred_label": "helicopter",
+        "confidence": 0.47242435812950134,
+        "correct": false
+      },
+      {
+        "filename": "HELICOPTER_001",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.46836090087890625,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_002",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.46494966745376587,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_003",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4683428704738617,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_004",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.46526238322257996,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_005",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.465695321559906,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_006",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4647740423679352,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_007",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4650966227054596,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_008",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4664933383464813,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_009",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.468706339597702,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_010",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4662536382675171,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_011",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4664335548877716,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_012",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4674582779407501,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_013",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4693095088005066,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_014",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.46407079696655273,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_015",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4657977819442749,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_016",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.46538224816322327,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_017",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4705742299556732,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_018",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4682564437389374,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_019",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.466249018907547,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_020",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.46782350540161133,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_021",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.46450868248939514,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_022",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.466823548078537,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_023",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4640847146511078,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_024",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4648536145687103,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_025",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.46586188673973083,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_026",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4659230411052704,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_027",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.46604791283607483,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_028",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.46857815980911255,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_029",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.4672631025314331,
+        "correct": true
+      },
+      {
+        "filename": "HELICOPTER_030",
+        "true_label": "helicopter",
+        "pred_label": "helicopter",
+        "confidence": 0.46545422077178955,
+        "correct": true
+      }
+    ]
+  }
+}

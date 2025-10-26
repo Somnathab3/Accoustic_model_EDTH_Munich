@@ -1,0 +1,22 @@
+{
+  "data_dir": "data/combined_dataset",
+  "output_dir": "models/matched_bank_comparison",
+  "epochs": 50,
+  "batch_size": 32,
+  "lr": 0.0001,
+  "weight_decay": 0.01,
+  "compression": 6,
+  "use_curriculum": true,
+  "focal_gamma": 2.0,
+  "snr_levels": [
+    30,
+    20,
+    15,
+    10,
+    5,
+    0
+  ],
+  "num_workers": 4,
+  "seed": 42,
+  "baseline_checkpoint": "models/crnn_combined/best_model.pt"
+}

@@ -32,7 +32,7 @@ def add_challenging_samples():
     print(f"Correct predictions: {len(correct_df)}")
     
     # Filter for low confidence (< 75%)
-    challenging_df = correct_df[correct_df['confidence'] < 0.75].copy()
+    challenging_df = correct_df[correct_df['confidence'] < 0.8].copy()
     print(f"Correct but low confidence (< 75%): {len(challenging_df)}")
     
     if len(challenging_df) == 0:

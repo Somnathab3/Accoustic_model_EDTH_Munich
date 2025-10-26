@@ -1,0 +1,37 @@
+{
+  "timestamp": "20251026_054349",
+  "total_samples": 200,
+  "audio_found": 200,
+  "baseline_still_correct": 179,
+  "enhanced_correct": 185,
+  "both_correct": 174,
+  "enhanced_wrong": 15,
+  "baseline_changed": 21,
+  "by_class": {
+    "drone": {
+      "total": 59,
+      "audio_found": 59,
+      "baseline_still_correct": 43,
+      "enhanced_correct": 51,
+      "both_correct": 43,
+      "enhanced_wrong": 8
+    },
+    "background": {
+      "total": 58,
+      "audio_found": 58,
+      "baseline_still_correct": 54,
+      "enhanced_correct": 55,
+      "both_correct": 53,
+      "enhanced_wrong": 3
+    },
+    "helicopter": {
+      "total": 83,
+      "audio_found": 83,
+      "baseline_still_correct": 82,
+      "enhanced_correct": 79,
+      "both_correct": 78,
+      "enhanced_wrong": 4
+    }
+  },
+  "compatibility_rate": 92.5
+}

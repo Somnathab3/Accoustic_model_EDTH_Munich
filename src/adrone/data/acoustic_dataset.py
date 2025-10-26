@@ -229,6 +229,9 @@ def create_dataloaders(
         
         print(f"✓ Using balanced sampler for training")
     
+    # Determine pin_memory based on CUDA availability
+    use_pin_memory = torch.cuda.is_available()
+    
     # Create dataloaders
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
@@ -236,7 +239,7 @@ def create_dataloaders(
         shuffle=shuffle,
         sampler=sampler,
         num_workers=num_workers,
-        pin_memory=True,
+        pin_memory=use_pin_memory,
         drop_last=True  # For stable batch norm
     )
     
@@ -245,7 +248,7 @@ def create_dataloaders(
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
-        pin_memory=True
+        pin_memory=use_pin_memory
     )
     
     return train_loader, val_loader, class_weights, samples_per_class
